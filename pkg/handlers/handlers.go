@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog"
@@ -13,9 +14,11 @@ import (
 
 var lg zerolog.Logger = log.With().Str("component", "Conbukun Bot").Logger()
 
+// log keys
 const (
 	lkHandler = "handler"
 	lkCmd     = "command"
+	lkFunc    = "function"
 	lkGuild   = "guild"
 	lkCh      = "channel"
 	lkUsr     = "user"
@@ -23,11 +26,15 @@ const (
 	lkDM      = "dm"
 	lkIID     = "interaction_id"
 	lkMID     = "message_id"
+)
 
+const (
 	CmdHelp      = "help"
 	CmdMule      = "mule"
 	CmdActReq    = "action-required"
 	CmdActReqMsg = "message"
+
+	FuncReactionStats = "reaction-stats"
 )
 
 func OnReady(s *discordgo.Session, r *discordgo.Ready) {
@@ -68,12 +75,12 @@ var (
 	}
 )
 
-var helpMsg = "使い方（60秒間表示）\n" +
+const helpMsg = "使い方（60秒間表示）\n" +
 	"## コマンド\n" +
 	"- `/help` このメッセージを表示します。\n" +
 	"- `/mule` ラバに関するヒントをランダムに表示します。\n" +
 	"## メンション\n" +
-	"- **リアクション集計機能** 集計したいメッセージの返信に本botへのメンションとキーワード（`集計` `summary`）を入力すると表形式で出力します。\n" +
+	"- **リアクション集計機能** 集計したいメッセージの返信に本botへのメンションとキーワード（`集計` `stats` `summary`）を入力すると表形式で出力します。\n" +
 	"\n" +
 	"> conbukun-bot v0.1.0 by ebiiim with ❤"
 
@@ -95,6 +102,7 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 var (
 	muleMsgs = []string{
+		"本当はラバbotです by 開発者",
 		"【ラバ教豆知識】戦闘ラバの重さは110kg",
 		"【ラバ教豆知識】ラバの重さは45kg",
 		"あなたはラバを信じますか？ | Do you believe in Mule? | Ты веришь в мула? | 你相信骡子吗？",
@@ -134,8 +142,6 @@ func OnMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		isDM = true
 	}
 
-	lg.Info().Str(lkMID, m.ID).Str(lkGuild, m.GuildID).Str(lkCh, m.ChannelID).Bool(lkDM, isDM).Str(lkUsr, m.Author.ID).Str(lkName, m.Author.Username).Msg("OnMessageCreate")
-
 	// check mention
 	isMention := false
 	for _, u := range m.Mentions {
@@ -160,20 +166,39 @@ func OnMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		hasRef = true
 	}
 
-	lg.Debug().Str(lkMID, m.ID).Str(lkGuild, m.GuildID).Str(lkCh, m.ChannelID).Bool(lkDM, isDM).Str(lkUsr, m.Author.ID).Str(lkName, m.Author.Username).Msgf("isMention=%v isThread=%v hasRef=%v", isMention, isThread, hasRef)
+	// check function
+	funcName := ""
+	if !isDM && isMention && hasRef && containsReactionStats(m.Content) {
+		funcName = FuncReactionStats
+	}
 
-	// route functions
-	if !isDM && isMention && hasRef && containsSummarization(m.Content) {
-		handleSummarization(s, m)
+	lg.Debug().Str(lkMID, m.ID).Str(lkGuild, m.GuildID).Str(lkCh, m.ChannelID).Bool(lkDM, isDM).Str(lkUsr, m.Author.ID).Str(lkName, m.Author.Username).Msgf("isMention=%v isThread=%v hasRef=%v content=%s", isMention, isThread, hasRef, m.Content)
+
+	if funcName == "" {
+		return
+	}
+
+	lg.Info().Str(lkMID, m.ID).Str(lkGuild, m.GuildID).Str(lkCh, m.ChannelID).Str(lkFunc, funcName).Bool(lkDM, isDM).Str(lkUsr, m.Author.ID).Str(lkName, m.Author.Username).Msg("OnMessageCreate")
+	switch funcName {
+	case FuncReactionStats:
+		handleReactionStats(s, m)
+	default:
+		return
 	}
 }
 
-func containsSummarization(s string) bool {
+func containsReactionStats(s string) bool {
 	ss := strings.ToLower(s)
-	return strings.Contains(ss, "集計") || strings.Contains(ss, "sum")
+	return strings.Contains(ss, "集計") || strings.Contains(ss, "sum") || strings.Contains(ss, "stats")
 }
 
-func handleSummarization(s *discordgo.Session, m *discordgo.MessageCreate) {
+func handleReactionStats(s *discordgo.Session, m *discordgo.MessageCreate) {
+	lg.Info().Str(lkMID, m.ID).Str(lkFunc, FuncReactionStats).Msgf("ReactionStats: called")
+
+	if err := s.ChannelTyping(m.ChannelID); err != nil {
+		lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not send typing")
+	}
+
 	parentMsg, err := s.ChannelMessage(m.ChannelID, m.MessageReference.MessageID)
 	if err != nil {
 		lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not get parent message")
@@ -227,12 +252,16 @@ func handleSummarization(s *discordgo.Session, m *discordgo.MessageCreate) {
 	var table strings.Builder
 	table.WriteString("集計しました（2分間表示）\n")
 	for _, emoji := range emojiList {
-		table.WriteString(emoji)
+		if utf8.RuneCountInString(emoji) == 1 {
+			table.WriteString(emoji)
+		} else {
+			table.WriteString(fmt.Sprintf("<:%s>", emoji)) // e.g. <:ma:1151171171799269476>
+		}
 		table.WriteString(" | ")
 	}
 	table.WriteString("😀")
 	table.WriteString("\n")
-	for i := 0; i < len(emojiList)*5; i++ {
+	for i := 0; i < len(emojiList)*5+10; i++ {
 		table.WriteRune('-')
 	}
 	table.WriteString("\n")
@@ -252,12 +281,13 @@ func handleSummarization(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if err != nil {
 		lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not send reply")
 	}
+	if err := s.ChannelMessageDelete(m.ChannelID, m.ID); err != nil {
+		lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not delete summarization request message")
+	}
 	time.AfterFunc(time.Second*120, func() {
+		lg.Info().Str(lkMID, m.ID).Str(lkFunc, FuncReactionStats).Msgf("ReactionStats: delete")
 		if err := s.ChannelMessageDelete(m.ChannelID, reply.ID); err != nil {
 			lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not delete reply")
-		}
-		if err := s.ChannelMessageDelete(m.ChannelID, m.ID); err != nil {
-			lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not delete summarization request message")
 		}
 	})
 }
