@@ -4,7 +4,7 @@ kind: Kustomization
 images:
   - name: conbukun
     newName: ghcr.io/ebiiim/conbukun
-    newTag: "0.1.0"
+    newTag: "0.1.0-alpha1"
 
 namespace: conbukun
 
@@ -12,7 +12,7 @@ namePrefix: ""
 nameSuffix: ""
 
 resources:
-  - bases/deploy.yaml
+  - base/deploy.yaml
   # - secret.yaml
 
 patchesStrategicMerge: []
