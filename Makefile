@@ -17,4 +17,4 @@ build: gen conbukun
 
 .PHONY: conbukun
 conbukun: gen
-	go build $(GO_BUILD_ARGS) -o bin/conbukun cmd/conbukun/main.go
+	CGO_ENABLED=0 go build $(GO_BUILD_ARGS) -o bin/conbukun cmd/conbukun/main.go
