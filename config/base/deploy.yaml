@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: conbukun
+  name: conbukun
+spec:
+  selector:
+    matchLabels:
+      app: conbukun
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: conbukun
+    spec:
+      containers:
+        - name: conbukun
+          image: conbukun
+          command:
+            - conbukun
+            - -v=5
+          env:
+            - name: CONBUKUN_GUILD_ID
+              valueFrom:
+                secretKeyRef:
+                  name: conbukun-secrets
+                  key: guild_id
+            - name: CONBUKUN_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: conbukun-secrets
+                  key: auth_token
+          resources:
+            requests:
+              cpu: 250m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
