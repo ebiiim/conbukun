@@ -82,7 +82,7 @@ const helpMsg = "使い方（60秒間表示）\n" +
 	"## メンション\n" +
 	"- **リアクション集計機能** 集計したいメッセージの返信に本botへのメンションとキーワード（`集計` `stats` `summary`）を入力すると表形式で出力します。\n" +
 	"\n" +
-	"> conbukun-bot v0.1.0 by ebiiim with ❤"
+	"> conbukun v0.1.0 by ebiiim with ❤"
 
 func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -102,7 +102,7 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 var (
 	muleMsgs = []string{
-		"本当はラバbotです by 開発者",
+		"これはラバbotです（開発者より）",
 		"【ラバ教豆知識】戦闘ラバの重さは110kg",
 		"【ラバ教豆知識】ラバの重さは45kg",
 		"あなたはラバを信じますか？ | Do you believe in Mule? | Ты веришь в мула? | 你相信骡子吗？",

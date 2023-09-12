@@ -4,7 +4,7 @@ kind: Kustomization
 images:
   - name: conbukun
     newName: ghcr.io/ebiiim/conbukun
-    newTag: "0.1.0-alpha2"
+    newTag: "0.1.0-alpha3"
 
 namespace: conbukun
 
