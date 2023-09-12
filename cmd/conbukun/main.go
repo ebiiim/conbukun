@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
 	"os/signal"
 	"syscall"
 
@@ -85,8 +86,17 @@ func main() {
 	flag.StringVar(&gid, "gid", "", "Guild ID or registers commands globally")
 	var token string
 	flag.StringVar(&token, "token", "", "Bot authentication token")
-
 	flag.Parse()
+
+	envGID := os.Getenv("CONBUKUN_GUILD_ID")
+	envToken := os.Getenv("CONBUKUN_AUTH_TOKEN")
+	if gid == "" {
+		gid = envGID
+	}
+	if token == "" {
+		token = envToken
+	}
+
 	switch logLevel {
 	default:
 		zerolog.SetGlobalLevel(zerolog.FatalLevel)
