@@ -1,0 +1,263 @@
+package handlers
+
+import (
+	"fmt"
+	"math/rand"
+	"strings"
+	"time"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+)
+
+var lg zerolog.Logger = log.With().Str("component", "Conbukun Bot").Logger()
+
+const (
+	lkHandler = "handler"
+	lkCmd     = "command"
+	lkGuild   = "guild"
+	lkCh      = "channel"
+	lkUsr     = "user"
+	lkName    = "username"
+	lkDM      = "dm"
+	lkIID     = "interaction_id"
+	lkMID     = "message_id"
+
+	CmdHelp      = "help"
+	CmdMule      = "mule"
+	CmdActReq    = "action-required"
+	CmdActReqMsg = "message"
+)
+
+func OnReady(s *discordgo.Session, r *discordgo.Ready) {
+	hn := "Ready"
+	lg.Info().Str(lkHandler, hn).Msgf("logged in as: %s#%s", s.State.User.Username, s.State.User.Discriminator)
+}
+
+func OnInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	isDM := i.User != nil
+	var usr *discordgo.User
+	if isDM {
+		usr = i.User
+	} else {
+		usr = i.Member.User
+	}
+	cmd := i.ApplicationCommandData().Name
+	lg.Info().Str(lkIID, i.ID).Str(lkGuild, i.GuildID).Str(lkCh, i.ChannelID).Str(lkCmd, cmd).Bool(lkDM, isDM).Str(lkUsr, usr.ID).Str(lkName, usr.Username).Msg("OnInteractionCreate")
+	if h, ok := CommandHandlers[cmd]; ok {
+		h(s, i)
+	}
+}
+
+var (
+	Commands = []*discordgo.ApplicationCommand{
+		{
+			Name:        CmdHelp,
+			Description: "Show help message for 60 seconds",
+		},
+		{
+			Name:        CmdMule,
+			Description: "Show a random mule tips for 30 seconds",
+		},
+	}
+
+	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+		CmdHelp: handleCmdHelp,
+		CmdMule: handleCmdMule,
+	}
+)
+
+var helpMsg = "使い方（60秒間表示）\n" +
+	"## コマンド\n" +
+	"- `/help` このメッセージを表示します。\n" +
+	"- `/mule` ラバに関するヒントをランダムに表示します。\n" +
+	"## メンション\n" +
+	"- **リアクション集計機能** 集計したいメッセージの返信に本botへのメンションとキーワード（`集計` `summary`）を入力すると表形式で出力します。\n" +
+	"\n" +
+	"> conbukun-bot v0.1.0 by ebiiim with ❤"
+
+func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: helpMsg,
+		},
+	}); err != nil {
+		lg.Error().Err(err).Str(lkIID, i.ID)
+	}
+	time.AfterFunc(time.Second*60, func() {
+		if err := s.InteractionResponseDelete(i.Interaction); err != nil {
+			lg.Error().Err(err).Str(lkIID, i.ID)
+		}
+	})
+}
+
+var (
+	muleMsgs = []string{
+		"【ラバ教豆知識】戦闘ラバの重さは110kg",
+		"【ラバ教豆知識】ラバの重さは45kg",
+		"あなたはラバを信じますか？ | Do you believe in Mule? | Ты веришь в мула? | 你相信骡子吗？",
+		"ラバは世界を救います | Mule saves the world | мулы спасает мир | 骡子拯救世界",
+		"ラバさえあればいい | No Mule, no life | все, что тебе нужно, это мул | 你只需要一头骡子",
+		"ラバを讃えよ | Praise Mule | хвалите мула | 赞美骡子",
+		"ラバは不滅です | Mule is immortal | мул бессмертен | 骡子是不朽的",
+		"ラバ！ラバ！ラバ！ラバ！ラバ！ | Mule! Mule! Mule! Mule! Mule!",
+	}
+)
+
+func handleCmdMule(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: muleMsgs[rand.Intn(len(muleMsgs))],
+		},
+	}); err != nil {
+		lg.Error().Err(err).Str(lkIID, i.ID)
+	}
+	time.AfterFunc(time.Second*30, func() {
+		if err := s.InteractionResponseDelete(i.Interaction); err != nil {
+			lg.Error().Err(err).Str(lkIID, i.ID)
+		}
+	})
+}
+
+func OnMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	// ignore bot messages
+	if m.Author.Bot {
+		return
+	}
+
+	// check DM
+	isDM := false
+	if m.GuildID == "" {
+		isDM = true
+	}
+
+	lg.Info().Str(lkMID, m.ID).Str(lkGuild, m.GuildID).Str(lkCh, m.ChannelID).Bool(lkDM, isDM).Str(lkUsr, m.Author.ID).Str(lkName, m.Author.Username).Msg("OnMessageCreate")
+
+	// check mention
+	isMention := false
+	for _, u := range m.Mentions {
+		if u.ID == s.State.Application.ID {
+			isMention = true
+		}
+	}
+
+	// check thread
+	isThread := false
+	ch, err := s.Channel(m.ChannelID)
+	if err != nil {
+		lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not get channel")
+	}
+	if ch.IsThread() {
+		isThread = true
+	}
+
+	// check ref
+	hasRef := false
+	if m.MessageReference != nil {
+		hasRef = true
+	}
+
+	lg.Debug().Str(lkMID, m.ID).Str(lkGuild, m.GuildID).Str(lkCh, m.ChannelID).Bool(lkDM, isDM).Str(lkUsr, m.Author.ID).Str(lkName, m.Author.Username).Msgf("isMention=%v isThread=%v hasRef=%v", isMention, isThread, hasRef)
+
+	// route functions
+	if !isDM && isMention && hasRef && containsSummarization(m.Content) {
+		handleSummarization(s, m)
+	}
+}
+
+func containsSummarization(s string) bool {
+	ss := strings.ToLower(s)
+	return strings.Contains(ss, "集計") || strings.Contains(ss, "sum")
+}
+
+func handleSummarization(s *discordgo.Session, m *discordgo.MessageCreate) {
+	parentMsg, err := s.ChannelMessage(m.ChannelID, m.MessageReference.MessageID)
+	if err != nil {
+		lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not get parent message")
+		return
+	}
+
+	userEmojis := map[string]map[string]bool{} // user -> emojis
+	emojiUsers := map[string]map[string]bool{} // emoji -> users
+
+	for _, u := range parentMsg.Mentions {
+		userEmojis[u.Username] = map[string]bool{}
+	}
+	members, err := s.GuildMembers(m.GuildID, "", 1000)
+	if err != nil {
+		lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not get guildmembers")
+		return
+	}
+	for _, role := range parentMsg.MentionRoles {
+		for _, member := range members {
+			for _, memberRole := range member.Roles {
+				if memberRole == role {
+					userEmojis[member.User.Username] = map[string]bool{}
+				}
+			}
+		}
+	}
+
+	for _, r := range parentMsg.Reactions {
+		users, err := s.MessageReactions(m.ChannelID, parentMsg.ID, r.Emoji.APIName(), 100, "", "")
+		if err != nil {
+			lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not get messagereactions")
+			continue
+		}
+		for _, u := range users {
+			if _, ok := userEmojis[u.Username]; !ok {
+				userEmojis[u.Username] = map[string]bool{}
+			}
+			userEmojis[u.Username][r.Emoji.APIName()] = true
+			if _, ok := emojiUsers[r.Emoji.APIName()]; !ok {
+				emojiUsers[r.Emoji.APIName()] = map[string]bool{}
+			}
+			emojiUsers[r.Emoji.APIName()][u.Username] = true
+		}
+	}
+
+	var emojiList []string
+	for emoji := range emojiUsers {
+		emojiList = append(emojiList, emoji)
+	}
+
+	var table strings.Builder
+	table.WriteString("集計しました（2分間表示）\n")
+	for _, emoji := range emojiList {
+		table.WriteString(emoji)
+		table.WriteString(" | ")
+	}
+	table.WriteString("😀")
+	table.WriteString("\n")
+	for i := 0; i < len(emojiList)*5; i++ {
+		table.WriteRune('-')
+	}
+	table.WriteString("\n")
+	for user, emojis := range userEmojis {
+		for _, emoji := range emojiList {
+			if emojis[emoji] {
+				table.WriteString("✅")
+			} else {
+				table.WriteString("➖")
+			}
+			table.WriteString(" | ")
+		}
+		table.WriteString(fmt.Sprintf("`%s`", user))
+		table.WriteString("\n")
+	}
+	reply, err := s.ChannelMessageSendReply(m.ChannelID, table.String(), m.Reference())
+	if err != nil {
+		lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not send reply")
+	}
+	time.AfterFunc(time.Second*120, func() {
+		if err := s.ChannelMessageDelete(m.ChannelID, reply.ID); err != nil {
+			lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not delete reply")
+		}
+		if err := s.ChannelMessageDelete(m.ChannelID, m.ID); err != nil {
+			lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not delete summarization request message")
+		}
+	})
+}
