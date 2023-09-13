@@ -1,6 +1,6 @@
 # こんぶくん🤖
 
-<img align="right" src="https://raw.githubusercontent.com/ebiiim/conbukun/main/assets/conbu.jpg" alt="conbukun" width="100" height=""/>
+<img align="right" src="https://raw.githubusercontent.com/ebiiim/conbukun/main/assets/conbu.jpg" alt="conbukun" width="" height="100" />
 
 [![Static Badge](https://img.shields.io/badge/add%20to%20Discord-7289DA?logo=discord&labelColor=FFFFFF)](https://discord.com/oauth2/authorize?client_id=1151028506470404096&scope=bot&permissions=11264) [![Static Badge](https://img.shields.io/badge/add%20to%20Discord%20(test)-7289DA?logo=discord&labelColor=FFFFFF)
 ](https://discord.com/oauth2/authorize?client_id=1151570933543342101&scope=bot&permissions=11264)
