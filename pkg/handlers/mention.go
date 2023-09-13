@@ -140,6 +140,26 @@ func handleMessageCreateReactionStats(s *discordgo.Session, m *discordgo.Message
 		}
 	}
 
+	// drop self
+	delete(userEmojis, s.State.User.Username)
+	for _, e := range emojiUsers {
+		delete(e, s.State.User.Username)
+	}
+	// drop special emojis
+	guildEmojis, err := s.GuildEmojis(m.GuildID)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not get GuildEmojis")
+	}
+	specialEmojis := []string{"🤖", getGuildEmojiAPINameByName(guildEmojis, ReactionMa), getGuildEmojiAPINameByName(guildEmojis, ReactionConbu01)}
+	for _, u := range userEmojis {
+		for _, se := range specialEmojis {
+			delete(u, se)
+		}
+	}
+	for _, se := range specialEmojis {
+		delete(emojiUsers, se)
+	}
+
 	var emojiList []string
 	for emoji := range emojiUsers {
 		emojiList = append(emojiList, emoji)

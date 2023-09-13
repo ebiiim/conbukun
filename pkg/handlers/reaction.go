@@ -119,6 +119,11 @@ func handleReactionAddReactionStats(s *discordgo.Session, r *discordgo.MessageRe
 		}
 	}
 
+	// drop self
+	delete(userEmojis, s.State.User.Username)
+	for _, e := range emojiUsers {
+		delete(e, s.State.User.Username)
+	}
 	// drop special emojis
 	guildEmojis, err := s.GuildEmojis(r.GuildID)
 	if err != nil {
