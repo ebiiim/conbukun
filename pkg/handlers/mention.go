@@ -114,6 +114,9 @@ func handleMessageCreateReactionStats(s *discordgo.Session, m *discordgo.Message
 	}
 	for _, role := range parentMsg.MentionRoles {
 		for _, member := range members {
+			if member.User.Bot {
+				continue // skip bots (because bots don't skip what they need to do)
+			}
 			for _, memberRole := range member.Roles {
 				if memberRole == role {
 					userEmojis[member.User.Username] = map[string]bool{}
