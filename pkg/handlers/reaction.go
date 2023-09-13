@@ -163,8 +163,11 @@ func handleReactionAddReactionStats(s *discordgo.Session, r *discordgo.MessageRe
 		table.WriteString(fmt.Sprintf("`%s`", user))
 		table.WriteString("\n")
 	}
-	// TODO: send silent message
-	msg, err := s.ChannelMessageSend(r.ChannelID, table.String())
+	msg, err := sendSilentMessage(s, r.ChannelID, &discordgo.MessageSend{
+		Content: table.String(),
+		TTS:     false,
+	})
+	// msg, err := s.ChannelMessageSend(r.ChannelID, table.String())
 	if err != nil {
 		lg.Error().Err(err).Msg("could not send msg")
 	}
@@ -174,4 +177,74 @@ func handleReactionAddReactionStats(s *discordgo.Session, r *discordgo.MessageRe
 			lg.Error().Err(err).Msg("could not delete msg (AfterFunc)")
 		}
 	})
+}
+
+type messageSend struct {
+	discordgo.MessageSend `json:",inline"`
+	Flags                 discordgo.MessageFlags `json:"flags,omitempty"`
+}
+
+func sendSilentMessage(s *discordgo.Session, channelID string, data *discordgo.MessageSend, options ...discordgo.RequestOption) (st *discordgo.Message, err error) {
+	// TODO: Remove this when compatibility is not required.
+	if data.Embed != nil {
+		if data.Embeds == nil {
+			data.Embeds = []*discordgo.MessageEmbed{data.Embed}
+		} else {
+			err = fmt.Errorf("cannot specify both Embed and Embeds")
+			return
+		}
+	}
+
+	for _, embed := range data.Embeds {
+		if embed.Type == "" {
+			embed.Type = "rich"
+		}
+	}
+	endpoint := discordgo.EndpointChannelMessages(channelID)
+
+	// TODO: Remove this when compatibility is not required.
+	files := data.Files
+	if data.File != nil {
+		if files == nil {
+			files = []*discordgo.File{data.File}
+		} else {
+			err = fmt.Errorf("cannot specify both File and Files")
+			return
+		}
+	}
+
+	data2 := messageSend{
+		MessageSend: *data,
+		Flags:       MessageFlagsSilent,
+	}
+
+	var response []byte
+	if len(files) > 0 {
+		// NOTE: won't support
+		return nil, fmt.Errorf("not supported: len(files) > 0")
+
+		// contentType, body, encodeErr := discordgo.MultipartBodyWithJSON(data, files)
+		// if encodeErr != nil {
+		// 	return st, encodeErr
+		// }
+
+		// response, err = s.request("POST", endpoint, contentType, body, endpoint, 0, options...)
+	} else {
+		response, err = s.RequestWithBucketID("POST", endpoint, data2, endpoint, options...)
+	}
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(response, &st)
+	return
+}
+
+func unmarshal(data []byte, v interface{}) error {
+	err := discordgo.Unmarshal(data, v)
+	if err != nil {
+		return fmt.Errorf("%w: %s", discordgo.ErrJSONUnmarshal, err)
+	}
+
+	return nil
 }
