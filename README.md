@@ -15,6 +15,8 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 
 - 実装予定
   - 機能: `リアクション集計` 未反応の人をリストする
+  - 機能: プレゼンスぐるぐる
+  - 機能: 話しかけられたら反応する
 - 2023-09-13 v0.1.0
   - 記念すべき初回リリース
   - 機能: `/help` `/mule` `リアクション集計`
