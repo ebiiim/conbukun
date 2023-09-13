@@ -31,6 +31,7 @@ func run(gid string, token string) error {
 	s.AddHandler(handlers.OnReady)
 	s.AddHandler(handlers.OnMessageCreate)
 	s.AddHandler(handlers.OnInteractionCreate)
+	s.AddHandler(handlers.OnMessageReactionAdd)
 
 	if err := s.Open(); err != nil {
 		return err
