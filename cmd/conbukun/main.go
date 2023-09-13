@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/ebiiim/conbukun/pkg/handlers"
+	"github.com/ebiiim/conbukun/pkg/presence"
 )
 
 func run(gid string, token string) error {
@@ -21,6 +22,10 @@ func run(gid string, token string) error {
 		return err
 	}
 	lg.Info().Msgf("bot created")
+
+	if gid != "" {
+		lg.Info().Str("guild", gid).Msgf("guild id specified")
+	}
 
 	lg.Info().Msgf("adding handlers...")
 	s.AddHandler(handlers.OnReady)
@@ -39,15 +44,25 @@ func run(gid string, token string) error {
 
 	lg.Info().Msg("creating commands...")
 	for _, v := range handlers.Commands {
-		lg.Debug().Msgf("creating command: %s", v.Name)
-		if _, err := s.ApplicationCommandCreate(s.State.User.ID, gid, v); err != nil {
+		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, gid, v)
+		if err != nil {
 			lg.Error().Err(err).Msgf("could not create command: %s", v.Name)
 		}
+		lg.Debug().Msgf("command created: %s(%s)", cmd.ID, cmd.Name)
 	}
 
 	lg.Info().Msgf("bot started (CTRL+C to stop)")
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
+
+	stopped := make(chan struct{})
+	go func() {
+		lg.Info().Msg("PresenceUpdateLoop started")
+		presence.PresenceUpdateLoop(ctx, s)
+		lg.Info().Msg("PresenceUpdateLoop stopped")
+		stopped <- struct{}{}
+	}()
+
 	<-ctx.Done() // wait for SIGINT
 	lg.Info().Msg("SIGINT received")
 
@@ -64,13 +79,21 @@ func run(gid string, token string) error {
 		}
 	}
 
+	// wait for goroutines to exit
+	<-stopped
+	lg.Info().Msg("all components are stopped")
+
 	lg.Info().Msg("bot stopped")
 	return nil
 }
 
 var version = "dev"
 
-var lg zerolog.Logger = log.With().Str("component", "Conbukun Bot (main)").Logger()
+func init() {
+	handlers.Version = version
+}
+
+var lg zerolog.Logger = log.With().Str("component", "Conbukun Bot").Logger()
 
 func main() {
 	flag.CommandLine.Usage = func() {
@@ -112,6 +135,7 @@ func main() {
 		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	}
 
+	lg.Info().Msgf("conbukun version=%v", version)
 	if err := run(gid, token); err != nil {
 		lg.Fatal().Err(err).Msg("stopped")
 	}

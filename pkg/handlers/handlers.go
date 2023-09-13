@@ -12,7 +12,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var lg zerolog.Logger = log.With().Str("component", "Conbukun Bot").Logger()
+var Version = "dev" // main.go injects this value
+
+var lg zerolog.Logger = log.With().Str("component", "conbukun/pkg/handlers").Logger()
 
 // log keys
 const (
@@ -61,11 +63,11 @@ var (
 	Commands = []*discordgo.ApplicationCommand{
 		{
 			Name:        CmdHelp,
-			Description: "Show help message for 60 seconds",
+			Description: "Show help message.",
 		},
 		{
 			Name:        CmdMule,
-			Description: "Show a random mule tips for 30 seconds",
+			Description: "Show a random mule tips for 30 seconds.",
 		},
 	}
 
@@ -75,29 +77,26 @@ var (
 	}
 )
 
-const helpMsg = "使い方（60秒間表示）\n" +
-	"## コマンド\n" +
-	"- `/help` このメッセージを表示します。\n" +
-	"- `/mule` ラバに関するヒントをランダムに表示します。\n" +
-	"## メンション\n" +
-	"- **リアクション集計機能** 集計したいメッセージの返信に本botへのメンションとキーワード（`集計` `stats` `summary`）を入力すると表形式で出力します。\n" +
-	"\n" +
-	"> conbukun v0.1.0 by ebiiim with ❤"
-
 func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	var helpMsg = "" +
+		"## コマンド\n" +
+		"- `/help` このメッセージを表示します。\n" +
+		"- `/mule` ラバに関するヒントをランダムに表示します。\n" +
+		"## メンション\n" +
+		"- **リアクション集計機能** 集計したいメッセージの返信に本botへのメンションとキーワード（`集計` `stats` `summary`）を入力すると表形式で出力します。\n" +
+		"\n" +
+		"> _[conbukun](https://github.com/ebiiim/conbukun) " + Version + " by ebiiim with ❤_" +
+		""
+
 	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: helpMsg,
+			Flags:   discordgo.MessageFlagsEphemeral | discordgo.MessageFlagsSuppressEmbeds | MessageFlagsSilent,
 		},
 	}); err != nil {
 		lg.Error().Err(err).Str(lkIID, i.ID)
 	}
-	time.AfterFunc(time.Second*60, func() {
-		if err := s.InteractionResponseDelete(i.Interaction); err != nil {
-			lg.Error().Err(err).Str(lkIID, i.ID)
-		}
-	})
 }
 
 var (
@@ -111,14 +110,19 @@ var (
 		"ラバを讃えよ | Praise Mule | хвалите мула | 赞美骡子",
 		"ラバは不滅です | Mule is immortal | мул бессмертен | 骡子是不朽的",
 		"ラバ！ラバ！ラバ！ラバ！ラバ！ | Mule! Mule! Mule! Mule! Mule!",
+		"[mule-n-img](https://render.albiononline.com/v1/item/Novice's%20Mule.png)",
+		"[mule-b-img](https://render.albiononline.com/v1/item/Heretic%20Combat%20Mule.png)",
 	}
 )
+
+const MessageFlagsSilent = 1 << 12
 
 func handleCmdMule(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: muleMsgs[rand.Intn(len(muleMsgs))],
+			Flags:   MessageFlagsSilent,
 		},
 	}); err != nil {
 		lg.Error().Err(err).Str(lkIID, i.ID)
@@ -277,6 +281,7 @@ func handleReactionStats(s *discordgo.Session, m *discordgo.MessageCreate) {
 		table.WriteString(fmt.Sprintf("`%s`", user))
 		table.WriteString("\n")
 	}
+	// TODO: send silent message
 	reply, err := s.ChannelMessageSendReply(m.ChannelID, table.String(), m.Reference())
 	if err != nil {
 		lg.Error().Err(err).Str(lkMID, m.ID).Msg("could not send reply")
