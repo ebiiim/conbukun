@@ -8,7 +8,7 @@ import (
 )
 
 func OnInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	lg = lg.With().Str(lkHandler, "InteractionCreate").Str(lkIID, i.ID).Logger()
+	lg := lg.With().Str(lkHandler, "InteractionCreate").Str(lkIID, i.ID).Logger()
 
 	isDM := i.User != nil
 	var usr *discordgo.User
@@ -52,7 +52,7 @@ func getGuildEmojiAPINameByName(guildEmojis []*discordgo.Emoji, name string) str
 }
 
 func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	lg = lg.With().Str(lkCmd, CmdHelp).Str(lkIID, i.ID).Logger()
+	lg := lg.With().Str(lkCmd, CmdHelp).Str(lkIID, i.ID).Logger()
 
 	guildEmojis, err := s.GuildEmojis(i.GuildID)
 	if err != nil {
@@ -101,7 +101,7 @@ var (
 )
 
 func handleCmdMule(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	lg = lg.With().Str(lkCmd, CmdMule).Str(lkIID, i.ID).Logger()
+	lg := lg.With().Str(lkCmd, CmdMule).Str(lkIID, i.ID).Logger()
 
 	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,

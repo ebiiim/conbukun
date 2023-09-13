@@ -9,7 +9,7 @@ import (
 )
 
 func OnMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	lg = lg.With().
+	lg := lg.With().
 		Str(lkHandler, "MessageCreate").
 		Str(lkMID, m.ID).
 		Str(lkGuild, m.GuildID).
@@ -80,7 +80,7 @@ func containsReactionStats(s string) bool {
 }
 
 func handleMessageCreateReactionStats(s *discordgo.Session, m *discordgo.MessageCreate) {
-	lg = lg.With().
+	lg := lg.With().
 		Str(lkFunc, FuncMessageCreateReactionStats).
 		Str(lkMID, m.ID).
 		Str(lkGuild, m.GuildID).

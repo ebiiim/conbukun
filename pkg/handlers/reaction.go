@@ -24,7 +24,7 @@ var (
 )
 
 func OnMessageReactionAdd(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
-	lg = lg.With().
+	lg := lg.With().
 		Str(lkHandler, "MessageReactionAdd").
 		Str(lkGuild, r.GuildID).
 		Str(lkCh, r.ChannelID).
@@ -58,7 +58,7 @@ func handleReactionAddReactionStats(s *discordgo.Session, r *discordgo.MessageRe
 		return
 	}
 
-	lg = lg.With().
+	lg := lg.With().
 		Str(lkFunc, FuncReactionAddReactionStats).
 		Str(lkGuild, r.GuildID).
 		Str(lkCh, r.ChannelID).
