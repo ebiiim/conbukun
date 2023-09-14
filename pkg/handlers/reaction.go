@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"unicode/utf8"
+	"unicode"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -42,10 +42,19 @@ func OnMessageReactionAdd(s *discordgo.Session, r *discordgo.MessageReactionAdd)
 
 }
 
+func isASCII(s string) bool {
+	for _, c := range s {
+		if c > unicode.MaxASCII {
+			return false
+		}
+	}
+	return true
+}
+
 func emoji2msg(emojiAPIName string) string {
 	if emojiAPIName == "" {
 		return ""
-	} else if utf8.RuneCountInString(emojiAPIName) == 1 {
+	} else if !isASCII(emojiAPIName) {
 		return emojiAPIName // normal emojis
 	} else {
 		return fmt.Sprintf("<:%s>", emojiAPIName) // e.g. <:ma:1151171171799269476>
