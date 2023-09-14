@@ -249,6 +249,10 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 			mentionedUserIDs[member.User.ID] = struct{}{}
 		}
 	}
+	if len(mentionedUserIDs) == 0 {
+		lg.Info().Msgf("ReactionAddReactionRequired: returned as the msg has no mentions")
+		return
+	}
 
 	// Parse reactions.
 	reactedUserIDs := map[string]struct{}{}
