@@ -17,6 +17,7 @@ spec:
       containers:
         - name: conbukun
           image: conbukun
+          imagePullPolicy: Always # need this as we use "latest" in kustomization
           command:
             - conbukun
             - -v=5
