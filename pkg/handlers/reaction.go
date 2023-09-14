@@ -286,7 +286,7 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 			if _, ok := reactedUserIDs[id]; ok {
 				continue
 			}
-			sb.WriteString(fmt.Sprintf("`%s` ", id2nick(members, id)))
+			sb.WriteString(fmt.Sprintf("`%s` ", id2name(members, id)))
 		}
 	}
 

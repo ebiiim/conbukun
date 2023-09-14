@@ -80,7 +80,7 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: helpMsg,
-			Flags:   discordgo.MessageFlagsEphemeral | discordgo.MessageFlagsSuppressEmbeds | MessageFlagsSilent,
+			Flags:   discordgo.MessageFlagsEphemeral | discordgo.MessageFlagsSuppressEmbeds | discordgo.MessageFlagsSuppressNotifications,
 		},
 	}); err != nil {
 		lg.Error().Err(err).Msg("could not send InteractionResponse")
@@ -110,7 +110,7 @@ func handleCmdMule(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: muleMsgs[rand.Intn(len(muleMsgs))],
-			Flags:   MessageFlagsSilent,
+			Flags:   discordgo.MessageFlagsSuppressNotifications,
 		},
 	}); err != nil {
 		lg.Error().Err(err).Msg("could not send InteractionResponse")

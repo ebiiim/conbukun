@@ -39,8 +39,6 @@ const (
 	FuncReactionAddReactionRequired = "reaction-add/reaction-required"
 )
 
-const MessageFlagsSilent = 1 << 12
-
 func OnReady(s *discordgo.Session, r *discordgo.Ready) {
 	lg = lg.With().Str(lkHandler, "Ready").Logger()
 
@@ -84,7 +82,7 @@ func getGuildEmojiAPINameByName(guildEmojis []*discordgo.Emoji, emojiName string
 }
 
 // returns "" if member not found
-func id2nick(guildMembers []*discordgo.Member, id string) string {
+func id2name(guildMembers []*discordgo.Member, id string) string {
 	var member *discordgo.Member
 	for _, m := range guildMembers {
 		if m.User.ID == id {
@@ -95,78 +93,16 @@ func id2nick(guildMembers []*discordgo.Member, id string) string {
 	if member == nil {
 		return ""
 	}
-	if member.Nick == "" {
-		return member.User.Username
+	if member.Nick != "" {
+		return member.Nick
 	}
-	return member.Nick
-}
-
-type messageSend struct {
-	discordgo.MessageSend `json:",inline"`
-	Flags                 discordgo.MessageFlags `json:"flags,omitempty"`
+	if member.User.GlobalName != "" {
+		return member.User.GlobalName
+	}
+	return member.User.Username
 }
 
 func sendSilentMessage(s *discordgo.Session, channelID string, data *discordgo.MessageSend, options ...discordgo.RequestOption) (st *discordgo.Message, err error) {
-	// TODO: Remove this when compatibility is not required.
-	if data.Embed != nil {
-		if data.Embeds == nil {
-			data.Embeds = []*discordgo.MessageEmbed{data.Embed}
-		} else {
-			err = fmt.Errorf("cannot specify both Embed and Embeds")
-			return
-		}
-	}
-
-	for _, embed := range data.Embeds {
-		if embed.Type == "" {
-			embed.Type = "rich"
-		}
-	}
-	endpoint := discordgo.EndpointChannelMessages(channelID)
-
-	// TODO: Remove this when compatibility is not required.
-	files := data.Files
-	if data.File != nil {
-		if files == nil {
-			files = []*discordgo.File{data.File}
-		} else {
-			err = fmt.Errorf("cannot specify both File and Files")
-			return
-		}
-	}
-
-	data2 := messageSend{
-		MessageSend: *data,
-		Flags:       MessageFlagsSilent,
-	}
-
-	var response []byte
-	if len(files) > 0 {
-		// NOTE: won't support
-		return nil, fmt.Errorf("not supported: len(files) > 0")
-
-		// contentType, body, encodeErr := discordgo.MultipartBodyWithJSON(data, files)
-		// if encodeErr != nil {
-		// 	return st, encodeErr
-		// }
-
-		// response, err = s.request("POST", endpoint, contentType, body, endpoint, 0, options...)
-	} else {
-		response, err = s.RequestWithBucketID("POST", endpoint, data2, endpoint, options...)
-	}
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(response, &st)
-	return
-}
-
-func unmarshal(data []byte, v interface{}) error {
-	err := discordgo.Unmarshal(data, v)
-	if err != nil {
-		return fmt.Errorf("%w: %s", discordgo.ErrJSONUnmarshal, err)
-	}
-
-	return nil
+	data.Flags = data.Flags | discordgo.MessageFlagsSuppressNotifications
+	return s.ChannelMessageSendComplex(channelID, data, options...)
 }

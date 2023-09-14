@@ -3,7 +3,7 @@ module github.com/ebiiim/conbukun
 go 1.21.0
 
 require (
-	github.com/bwmarrin/discordgo v0.27.1
+	github.com/bwmarrin/discordgo v0.27.2-0.20230907125633-a2079d3138d2
 	github.com/rs/zerolog v1.30.0
 )
 
