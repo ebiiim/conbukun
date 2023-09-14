@@ -4,24 +4,32 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"unicode"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 const (
-	ReactionConbu01 = "icon_conbu01"
-	ReactionConbu02 = "icon_conbu02"
-	ReactionMa      = "ma"
+	EmojiConbu01 = "icon_conbu01"
+	EmojiConbu02 = "icon_conbu02"
+	EmojiMa      = "ma"
 )
 
 var (
-	ReactionAddHandlers = map[string]func(s *discordgo.Session, r *discordgo.MessageReactionAdd){
-		"🤖":             handleReactionAddReactionStats,
-		ReactionConbu01: handleReactionAddReactionStats,
-		ReactionMa:      handleReactionAddReactionStats,
-	}
+	ReactionAddHandlers = map[string]func(s *discordgo.Session, r *discordgo.MessageReactionAdd){}
+
+	emojisReactionAddReactionStats    = []string{"🤖", EmojiConbu01, EmojiMa}
+	emojisReactionAddReactionRequired = []string{"👀", EmojiConbu02}
 )
+
+func init() {
+	lg.Debug().Msgf("init: register ReactionAddHandlers")
+	for _, emoji := range emojisReactionAddReactionStats {
+		ReactionAddHandlers[emoji] = handleReactionAddReactionStats
+	}
+	for _, emoji := range emojisReactionAddReactionRequired {
+		ReactionAddHandlers[emoji] = handleReactionAddReactionRequired
+	}
+}
 
 func OnMessageReactionAdd(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	lg := lg.With().
@@ -40,25 +48,6 @@ func OnMessageReactionAdd(s *discordgo.Session, r *discordgo.MessageReactionAdd)
 		h(s, r)
 	}
 
-}
-
-func isASCII(s string) bool {
-	for _, c := range s {
-		if c > unicode.MaxASCII {
-			return false
-		}
-	}
-	return true
-}
-
-func emoji2msg(emojiAPIName string) string {
-	if emojiAPIName == "" {
-		return ""
-	} else if !isASCII(emojiAPIName) {
-		return emojiAPIName // normal emojis
-	} else {
-		return fmt.Sprintf("<:%s>", emojiAPIName) // e.g. <:ma:1151171171799269476>
-	}
 }
 
 func handleReactionAddReactionStats(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
@@ -141,7 +130,10 @@ func handleReactionAddReactionStats(s *discordgo.Session, r *discordgo.MessageRe
 	if err != nil {
 		lg.Error().Err(err).Msg("could not get GuildEmojis")
 	}
-	specialEmojis := []string{"🤖", getGuildEmojiAPINameByName(guildEmojis, ReactionMa), getGuildEmojiAPINameByName(guildEmojis, ReactionConbu01)}
+	specialEmojis := []string{}
+	for _, emoji := range emojisReactionAddReactionStats {
+		specialEmojis = append(specialEmojis, getGuildEmojiAPINameByName(guildEmojis, emoji))
+	}
 	for _, u := range userEmojis {
 		for _, se := range specialEmojis {
 			delete(u, se)
@@ -182,9 +174,7 @@ func handleReactionAddReactionStats(s *discordgo.Session, r *discordgo.MessageRe
 	}
 	msg, err := sendSilentMessage(s, r.ChannelID, &discordgo.MessageSend{
 		Content: table.String(),
-		TTS:     false,
 	})
-	// msg, err := s.ChannelMessageSend(r.ChannelID, table.String())
 	if err != nil {
 		lg.Error().Err(err).Msg("could not send msg")
 	}
@@ -196,72 +186,114 @@ func handleReactionAddReactionStats(s *discordgo.Session, r *discordgo.MessageRe
 	})
 }
 
-type messageSend struct {
-	discordgo.MessageSend `json:",inline"`
-	Flags                 discordgo.MessageFlags `json:"flags,omitempty"`
-}
-
-func sendSilentMessage(s *discordgo.Session, channelID string, data *discordgo.MessageSend, options ...discordgo.RequestOption) (st *discordgo.Message, err error) {
-	// TODO: Remove this when compatibility is not required.
-	if data.Embed != nil {
-		if data.Embeds == nil {
-			data.Embeds = []*discordgo.MessageEmbed{data.Embed}
-		} else {
-			err = fmt.Errorf("cannot specify both Embed and Embeds")
-			return
-		}
-	}
-
-	for _, embed := range data.Embeds {
-		if embed.Type == "" {
-			embed.Type = "rich"
-		}
-	}
-	endpoint := discordgo.EndpointChannelMessages(channelID)
-
-	// TODO: Remove this when compatibility is not required.
-	files := data.Files
-	if data.File != nil {
-		if files == nil {
-			files = []*discordgo.File{data.File}
-		} else {
-			err = fmt.Errorf("cannot specify both File and Files")
-			return
-		}
-	}
-
-	data2 := messageSend{
-		MessageSend: *data,
-		Flags:       MessageFlagsSilent,
-	}
-
-	var response []byte
-	if len(files) > 0 {
-		// NOTE: won't support
-		return nil, fmt.Errorf("not supported: len(files) > 0")
-
-		// contentType, body, encodeErr := discordgo.MultipartBodyWithJSON(data, files)
-		// if encodeErr != nil {
-		// 	return st, encodeErr
-		// }
-
-		// response, err = s.request("POST", endpoint, contentType, body, endpoint, 0, options...)
-	} else {
-		response, err = s.RequestWithBucketID("POST", endpoint, data2, endpoint, options...)
-	}
-	if err != nil {
+func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	if r.GuildID == "" {
+		lg.Debug().Msgf("ReactionAddReactionRequired: return as no GuildID (this message is a DM)")
 		return
 	}
 
-	err = unmarshal(response, &st)
-	return
-}
+	lg := lg.With().
+		Str(lkFunc, FuncReactionAddReactionRequired).
+		Str(lkGuild, r.GuildID).
+		Str(lkCh, r.ChannelID).
+		Str(lkMID, r.MessageID).
+		Str(lkUsr, r.UserID).
+		Str(lkEmoji, r.Emoji.Name).
+		Str(lkEmojiA, r.Emoji.APIName()).
+		Logger()
 
-func unmarshal(data []byte, v interface{}) error {
-	err := discordgo.Unmarshal(data, v)
-	if err != nil {
-		return fmt.Errorf("%w: %s", discordgo.ErrJSONUnmarshal, err)
+	lg.Info().Msgf("ReactionAddReactionRequired: called")
+
+	if err := s.ChannelTyping(r.ChannelID); err != nil {
+		lg.Error().Err(err).Msg("could not send typing")
 	}
 
-	return nil
+	// Fetch data.
+	parentMsg, err := s.ChannelMessage(r.ChannelID, r.MessageID)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not get message")
+		return
+	}
+	members, err := s.GuildMembers(r.GuildID, "", 1000)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not get GuildMembers")
+		return
+	}
+
+	// Parse mentions.
+	// NOTE: channel mentions are not supported
+	mentionedUserIDs := map[string]struct{}{}
+	for _, u := range parentMsg.Mentions { // normal mentions
+		if u.Bot {
+			continue
+		}
+		mentionedUserIDs[u.ID] = struct{}{}
+	}
+	for _, role := range parentMsg.MentionRoles { // role mentions
+		for _, member := range members {
+			if member.User.Bot {
+				continue // skip bots (because bots don't skip what they need to do)
+			}
+			for _, memberRole := range member.Roles {
+				if memberRole == role {
+					mentionedUserIDs[member.User.ID] = struct{}{}
+				}
+			}
+		}
+	}
+	if parentMsg.MentionEveryone { // everyone mentions
+		for _, member := range members {
+			mentionedUserIDs[member.User.ID] = struct{}{}
+		}
+	}
+
+	// Parse reactions.
+	reactedUserIDs := map[string]struct{}{}
+	for _, rt := range parentMsg.Reactions {
+		skip := false
+		for _, excludedEmoji := range emojisReactionAddReactionRequired {
+			if rt.Emoji.Name == excludedEmoji {
+				skip = true
+			}
+		}
+		if skip {
+			continue
+		}
+		users, err := s.MessageReactions(r.ChannelID, parentMsg.ID, rt.Emoji.APIName(), 100, "", "")
+		if err != nil {
+			lg.Error().Err(err).Msg("could not get messagereactions")
+			continue
+		}
+		for _, u := range users {
+			if u.Bot {
+				continue
+			}
+			reactedUserIDs[u.ID] = struct{}{}
+		}
+	}
+
+	// Generate the response.
+	var sb strings.Builder
+	sb.WriteString("集計しました（2分間表示）\n")
+	sb.WriteString(fmt.Sprintf("### リアクションしたメンバー %d/%d\n", len(reactedUserIDs), len(mentionedUserIDs)))
+	sb.WriteString(("### 🔔リマインダー🔔\n"))
+	for id, _ := range mentionedUserIDs {
+		if _, ok := reactedUserIDs[id]; ok {
+			continue
+		}
+		sb.WriteString(fmt.Sprintf("`%s` ", id2nick(members, id)))
+	}
+
+	msg, err := sendSilentMessage(s, r.ChannelID, &discordgo.MessageSend{
+		Content: sb.String(),
+	})
+	if err != nil {
+		lg.Error().Err(err).Msg("could not send msg")
+	}
+	time.AfterFunc(time.Second*120, func() {
+		lg.Info().Msgf("delete (AfterFunc)")
+		if err := s.ChannelMessageDelete(r.ChannelID, msg.ID); err != nil {
+			lg.Error().Err(err).Msg("could not delete msg (AfterFunc)")
+		}
+	})
 }

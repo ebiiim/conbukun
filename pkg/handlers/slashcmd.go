@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -42,15 +43,6 @@ var (
 	}
 )
 
-func getGuildEmojiAPINameByName(guildEmojis []*discordgo.Emoji, name string) string {
-	for _, e := range guildEmojis {
-		if e.Name == name {
-			return e.APIName()
-		}
-	}
-	return ""
-}
-
 func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdHelp).Str(lkIID, i.ID).Logger()
 
@@ -59,14 +51,25 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		lg.Error().Err(err).Msg("could not get GuildEmojis")
 	}
 
-	geMa := emoji2msg(getGuildEmojiAPINameByName(guildEmojis, ReactionMa))
-	geC1 := emoji2msg(getGuildEmojiAPINameByName(guildEmojis, ReactionConbu01))
+	emojis2msg := func(guildEmojis []*discordgo.Emoji, emojis []string) string {
+		var sb strings.Builder
+		for _, emoji := range emojis {
+			s := emoji2msg(getGuildEmojiAPINameByName(guildEmojis, emoji))
+			if s == "" {
+				continue
+			}
+			sb.WriteString(s)
+			sb.WriteString(" ")
+		}
+		return strings.TrimSuffix(sb.String(), " ")
+	}
 	var helpMsg = "" +
 		"## コマンド\n" +
 		"- `/help` このメッセージを表示します。\n" +
 		"- `/mule` ラバに関するヒントをランダムに表示します。\n" +
 		"## リアクション\n" +
-		"- [試験運用中] **リアクション集計機能** 集計したいメッセージにリアクション（🤖 " + geMa + " " + geC1 + " ）を行うと表形式で出力します。\n" +
+		"- **リアクション集計機能** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionRequired) + "）を行うとリマインダーを表示します。\n" +
+		"- [試験運用中] **リアクション集計機能（表）** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionStats) + "）を行うと表形式で表示します。\n" +
 		"## おまけ\n" +
 		"- [試験運用中] 呼びかけに反応したりお昼寝したりします。\n" +
 		"\n" +
