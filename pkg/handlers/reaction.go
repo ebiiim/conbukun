@@ -297,6 +297,7 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 	// Send the response.
 	msg, err := sendSilentMessage(s, r.ChannelID, &discordgo.MessageSend{
 		Content: sb.String(),
+		Reference: parentMsg.Reference(),
 	})
 	if err != nil {
 		lg.Error().Err(err).Msg("could not send msg")
