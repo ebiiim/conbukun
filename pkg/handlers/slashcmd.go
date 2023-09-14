@@ -66,10 +66,10 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	var helpMsg = "" +
 		"## コマンド\n" +
 		"- `/help` このメッセージを表示します。\n" +
-		"- `/mule` ラバに関するヒントをランダムに表示します。\n" +
+		"- `/mule` ラバに関するヒントをランダムに投稿します（30秒後に自動削除）。\n" +
 		"## リアクション\n" +
-		"- **リアクション集計機能** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionRequired) + "）を行うとリマインダーを表示します。\n" +
-		"- [試験運用中] **リアクション集計機能（表）** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionStats) + "）を行うと表形式で表示します。\n" +
+		"- **リアクション集計** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionRequired) + "）を行うとリマインダーを投稿します（2分後に自動削除）。\n" +
+		// "- [試験運用中] **リアクション集計（表）** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionStats) + "）を行うと表形式で投稿します（2分後に削除）。\n" +
 		"## おまけ\n" +
 		"- [試験運用中] 呼びかけに反応したりお昼寝したりします。\n" +
 		"\n" +

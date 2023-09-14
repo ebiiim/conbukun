@@ -17,15 +17,15 @@ const (
 var (
 	ReactionAddHandlers = map[string]func(s *discordgo.Session, r *discordgo.MessageReactionAdd){}
 
-	emojisReactionAddReactionStats    = []string{"🤖", EmojiConbu01, EmojiMa}
-	emojisReactionAddReactionRequired = []string{"👀", EmojiConbu02}
+	emojisReactionAddReactionStats    = []string{"👀", EmojiConbu02}
+	emojisReactionAddReactionRequired = []string{"🤖", EmojiConbu01, EmojiMa}
 )
 
 func init() {
 	lg.Debug().Msgf("init: register ReactionAddHandlers")
-	for _, emoji := range emojisReactionAddReactionStats {
-		ReactionAddHandlers[emoji] = handleReactionAddReactionStats
-	}
+	// for _, emoji := range emojisReactionAddReactionStats {
+	// 	ReactionAddHandlers[emoji] = handleReactionAddReactionStats
+	// }
 	for _, emoji := range emojisReactionAddReactionRequired {
 		ReactionAddHandlers[emoji] = handleReactionAddReactionRequired
 	}
@@ -221,7 +221,7 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 	}
 
 	// Parse mentions.
-	// NOTE: channel mentions are not supported
+	// NOTE: channel mentions are not supported; skip bots because bots don't skip what they need to do
 	mentionedUserIDs := map[string]struct{}{}
 	for _, u := range parentMsg.Mentions { // normal mentions
 		if u.Bot {
@@ -232,7 +232,7 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 	for _, role := range parentMsg.MentionRoles { // role mentions
 		for _, member := range members {
 			if member.User.Bot {
-				continue // skip bots (because bots don't skip what they need to do)
+				continue
 			}
 			for _, memberRole := range member.Roles {
 				if memberRole == role {
@@ -243,6 +243,9 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 	}
 	if parentMsg.MentionEveryone { // everyone mentions
 		for _, member := range members {
+			if member.User.Bot {
+				continue
+			}
 			mentionedUserIDs[member.User.ID] = struct{}{}
 		}
 	}
@@ -274,14 +277,17 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 
 	// Generate the response.
 	var sb strings.Builder
-	sb.WriteString("集計しました（2分間表示）\n")
 	sb.WriteString(fmt.Sprintf("### リアクションしたメンバー %d/%d\n", len(reactedUserIDs), len(mentionedUserIDs)))
-	sb.WriteString(("### 🔔リマインダー🔔\n"))
-	for id, _ := range mentionedUserIDs {
-		if _, ok := reactedUserIDs[id]; ok {
-			continue
+	if len(reactedUserIDs) >= len(mentionedUserIDs) {
+		sb.WriteString(("### 🎉全員がリアクションしました🎉\n"))
+	} else {
+		sb.WriteString(("### 🔔リマインダー🔔\n"))
+		for id, _ := range mentionedUserIDs {
+			if _, ok := reactedUserIDs[id]; ok {
+				continue
+			}
+			sb.WriteString(fmt.Sprintf("`%s` ", id2nick(members, id)))
 		}
-		sb.WriteString(fmt.Sprintf("`%s` ", id2nick(members, id)))
 	}
 
 	msg, err := sendSilentMessage(s, r.ChannelID, &discordgo.MessageSend{
