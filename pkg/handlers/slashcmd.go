@@ -61,7 +61,7 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			sb.WriteString(s)
 			sb.WriteString(" ")
 		}
-		return strings.TrimSuffix(sb.String(), " ")
+		return strings.TrimRight(sb.String(), " ")
 	}
 	var helpMsg = "" +
 		"## コマンド\n" +
