@@ -29,11 +29,11 @@ var (
 	Commands = []*discordgo.ApplicationCommand{
 		{
 			Name:        CmdHelp,
-			Description: "Show help message.",
+			Description: "こんぶくんについて知る",
 		},
 		{
 			Name:        CmdMule,
-			Description: "Show a random mule tips for 30 seconds.",
+			Description: "こんぶくんがラバ教の経典から引用してくれる（30秒後に自動削除）",
 		},
 	}
 
@@ -89,15 +89,17 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 var (
 	muleMsgs = []string{
+		"わん",
+		"ファッキンラバ",
 		"これはラバbotです（開発者より）",
 		"【ラバ教豆知識】戦闘ラバの重さは110kg",
 		"【ラバ教豆知識】ラバの重さは45kg",
-		"あなたはラバを信じますか？ | Do you believe in Mule? | Ты веришь в мула? | 你相信骡子吗？",
-		"ラバは世界を救います | Mule saves the world | мулы спасает мир | 骡子拯救世界",
-		"ラバさえあればいい | No Mule, no life | все, что тебе нужно, это мул | 你只需要一头骡子",
-		"ラバを讃えよ | Praise Mule | хвалите мула | 赞美骡子",
-		"ラバは不滅です | Mule is immortal | мул бессмертен | 骡子是不朽的",
-		"ラバ！ラバ！ラバ！ラバ！ラバ！ | Mule! Mule! Mule! Mule! Mule!",
+		"> あなたはラバを信じますか？ | Do you believe in Mule? | Ты веришь в мула? | 你相信骡子吗？",
+		"> ラバは世界を救います | Mule saves the world | мулы спасает мир | 骡子拯救世界",
+		"> ラバさえあればいい | No Mule, no life | все, что тебе нужно, это мул | 你只需要一头骡子",
+		"> ラバを讃えよ | Praise Mule | хвалите мула | 赞美骡子",
+		"> ラバは不滅です | Mule is immortal | мул бессмертен | 骡子是不朽的",
+		"> ラバ！ラバ！ラバ！ラバ！ラバ！ | Mule! Mule! Mule! Mule! Mule!",
 		"[mule-n-img](https://render.albiononline.com/v1/item/Novice's%20Mule.png)",
 		"[mule-b-img](https://render.albiononline.com/v1/item/Heretic%20Combat%20Mule.png)",
 	}
