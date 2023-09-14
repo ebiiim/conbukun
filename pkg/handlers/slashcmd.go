@@ -71,7 +71,7 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		"- **リアクション集計** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionRequired) + "）を行うとリマインダーを投稿します（2分後に自動削除）。\n" +
 		// "- [試験運用中] **リアクション集計（表）** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionStats) + "）を行うと表形式で投稿します（2分後に削除）。\n" +
 		"## おまけ\n" +
-		"- [試験運用中] 呼びかけに反応したりお昼寝したりします。\n" +
+		"- 呼びかけに反応したりお昼寝したりします。\n" +
 		"\n" +
 		"> _[conbukun](https://github.com/ebiiim/conbukun) " + Version + " by ebiiim with ❤_" +
 		""
