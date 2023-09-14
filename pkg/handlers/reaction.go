@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -279,24 +280,31 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 		}
 	}
 
+	// Sort users.
+	var remindUsers []string
+	for id := range mentionedUserIDs {
+		if _, ok := reactedUserIDs[id]; ok {
+			continue
+		}
+		remindUsers = append(remindUsers, id2name(members, id))
+	}
+	sort.Strings(remindUsers)
+
 	// Generate the response.
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("### リアクションしたメンバー %d/%d\n", len(reactedUserIDs), len(mentionedUserIDs)))
-	if len(reactedUserIDs) >= len(mentionedUserIDs) {
+	if len(remindUsers) == 0 {
 		sb.WriteString(("### 🎉全員がリアクションしました🎉\n"))
 	} else {
 		sb.WriteString(("### 🔔リマインダー🔔\n"))
-		for id, _ := range mentionedUserIDs {
-			if _, ok := reactedUserIDs[id]; ok {
-				continue
-			}
-			sb.WriteString(fmt.Sprintf("`%s` ", id2name(members, id)))
+		for _, name := range remindUsers {
+			sb.WriteString(fmt.Sprintf("`%s` ", name))
 		}
 	}
 
 	// Send the response.
 	msg, err := sendSilentMessage(s, r.ChannelID, &discordgo.MessageSend{
-		Content: sb.String(),
+		Content:   strings.TrimRight(sb.String(), " "),
 		Reference: parentMsg.Reference(),
 	})
 	if err != nil {
