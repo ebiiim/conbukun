@@ -29,11 +29,10 @@ const (
 const (
 	CmdHelp      = "help"
 	CmdMule      = "mule"
-	CmdActReq    = "action-required"
 	CmdActReqMsg = "message"
 
-	FuncMessageCreateReactionStats = "message-create/reaction-stats"
-	FuncReactionAddReactionStats   = "reaction-add/reaction-stats"
+	FuncMessageCreateSayHello       = "message-create/say-hello"
+	FuncReactionAddReactionStats    = "reaction-add/reaction-stats"
 )
 
 const MessageFlagsSilent = 1 << 12
