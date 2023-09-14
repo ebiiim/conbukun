@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"math/rand"
 	"strings"
 	"time"
 
@@ -54,10 +55,7 @@ func OnMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// check function
 	funcName := ""
-	if containsConbukun(m.Content) {
-		funcName = FuncMessageCreateSayHello
-	}
-	if isMention {
+	if detectSayHello(m.Content) {
 		funcName = FuncMessageCreateSayHello
 	}
 
@@ -76,9 +74,33 @@ func OnMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func containsConbukun(s string) bool {
-	ss := strings.ToLower(s)
-	return strings.Contains(ss, "こんぶくん")
+func detectSayHello(s string) bool {
+	return false ||
+		containsWords(s, wordsConbu) ||
+		containsWords(s, wordsOha) ||
+		containsWords(s, wordsKonn) ||
+		containsWords(s, wordsBanwa) ||
+		containsWords(s, wordsOyasu) ||
+		containsWords(s, wordsOtiru) ||
+		false
+}
+
+var (
+	wordsConbu = []string{"こんぶくん"}
+	wordsOha   = []string{"おはよ", "おはです", "おはます"}
+	wordsKonn  = []string{"こんにちは", "こんにちわ", "こんちは", "こんちわ", "こんちゃ"}
+	wordsBanwa = []string{"こんばんは", "こんばんわ", "こんばわ", "ばんちゃ"}
+	wordsOyasu = []string{"おやす", "寝ま"}
+	wordsOtiru = []string{"おちま", "落ちま", "おちる", "落ちる", "お先", "おさき"}
+)
+
+func containsWords(s string, words []string) bool {
+	for _, word := range words {
+		if strings.Contains(s, word) {
+			return true
+		}
+	}
+	return false
 }
 
 func handleMessageCreateSayHello(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -93,13 +115,32 @@ func handleMessageCreateSayHello(s *discordgo.Session, m *discordgo.MessageCreat
 
 	lg.Info().Msgf("MessageCreateSayHello: called")
 
+	reply := ""
+
+	switch {
+	case containsWords(m.Content, wordsConbu):
+		if rand.Intn(100) < 5 {
+			reply = "にゃー" // 5%
+		} else {
+			reply = "わん"
+		}
+	case containsWords(m.Content, wordsOha) || containsWords(m.Content, wordsKonn) || containsWords(m.Content, wordsBanwa) || containsWords(m.Content, wordsOyasu) || containsWords(m.Content, wordsOtiru):
+		if rand.Intn(100) < 20 {
+			reply = "わん！" // 20%
+		} else {
+			reply = ""
+		}
+	}
+
+	if reply == "" {
+		return
+	}
+
+	// send reply
 	if err := s.ChannelTyping(m.ChannelID); err != nil {
 		lg.Error().Err(err).Msg("could not send typing")
 	}
-
 	time.Sleep(time.Second)
-
-	reply := "わん"
 	_, err := sendSilentMessage(s, m.ChannelID, &discordgo.MessageSend{
 		Content:   reply,
 		Reference: m.Reference(),
