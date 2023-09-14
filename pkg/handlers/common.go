@@ -103,6 +103,6 @@ func id2name(guildMembers []*discordgo.Member, id string) string {
 }
 
 func sendSilentMessage(s *discordgo.Session, channelID string, data *discordgo.MessageSend, options ...discordgo.RequestOption) (st *discordgo.Message, err error) {
-	data.Flags = data.Flags | discordgo.MessageFlagsSuppressNotifications
+	data.Flags |= discordgo.MessageFlagsSuppressNotifications
 	return s.ChannelMessageSendComplex(channelID, data, options...)
 }

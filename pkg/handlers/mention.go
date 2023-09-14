@@ -54,7 +54,10 @@ func OnMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// check function
 	funcName := ""
-	if isMention || containsConbukun(m.Content) {
+	if containsConbukun(m.Content) {
+		funcName = FuncMessageCreateSayHello
+	}
+	if isMention {
 		funcName = FuncMessageCreateSayHello
 	}
 
