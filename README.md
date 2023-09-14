@@ -30,6 +30,7 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 
 - 今後の課題
   - 機能: 会話（？）
+  - 内部: マルチインスタンス対応（{リアクション|メンション}ハンドラのGuild ID対応）
 - 2023-xx-xx v0.x.x
   - 機能: プレゼンスぐるぐる
   - 改善: `リアクション集計` どの投稿に対する集計かがわからなくなるのでリプライにした
