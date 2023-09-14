@@ -294,12 +294,26 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 		}
 	}
 
+	// Send the response.
 	msg, err := sendSilentMessage(s, r.ChannelID, &discordgo.MessageSend{
 		Content: sb.String(),
 	})
 	if err != nil {
 		lg.Error().Err(err).Msg("could not send msg")
 	}
+
+	// Reset emojis.
+	for _, rt := range parentMsg.Reactions {
+		for _, excludedEmoji := range emojisReactionAddReactionRequired {
+			if rt.Emoji.Name == excludedEmoji {
+				if err := s.MessageReactionsRemoveEmoji(r.ChannelID, r.MessageID, rt.Emoji.APIName()); err != nil {
+					lg.Error().Err(err).Msg("could not remove emoji from the message: " + rt.Emoji.APIName())
+				}
+			}
+		}
+	}
+
+	// Delete the response after 2 min.
 	time.AfterFunc(time.Second*120, func() {
 		lg.Info().Msgf("delete (AfterFunc)")
 		if err := s.ChannelMessageDelete(r.ChannelID, msg.ID); err != nil {
