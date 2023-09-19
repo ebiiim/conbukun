@@ -88,7 +88,7 @@ conbukun（本サービス）を利用する場合、ユーザーは次の利用
 Effective date: September 19, 2023<br>
 Last updated: September 19, 2023
 
-By using conbukun（the Service） you automatically agree to our Terms of Service below.
+By using conbukun（the Service） you automatically agree to the Terms of Service below.
 
 - Rights to use the service: You have the right to use the Service as long as you don't use it in any way that would break [Discord ToS](https://discord.com/terms) or the rules of the guild ("server") you are in.
 - Handling of personal data: You have to read, understand, and agree to the [Privacy Policy](#%E3%83%97%E3%83%A9%E3%82%A4%E3%83%90%E3%82%B7%E3%83%BC%E3%83%9D%E3%83%AA%E3%82%B7%E3%83%BCprivacy-policy).
