@@ -8,3 +8,4 @@
 - `img/mule-t6.png` https://wiki.albiononline.com/wiki/Heretic_Combat_Mule
 - `emoji/icon_conbu01.png` DogTheBoston Discord Server
 - `emoji/icon_conbu02.png` DogTheBoston Discord Server
+- `emoji/ma.png` https://emoji-gen.ninja/

@@ -2,10 +2,24 @@
 
 <img align="right" src="https://raw.githubusercontent.com/ebiiim/conbukun/main/assets/icon/conbu.jpg" alt="conbukun" width="" height="100" />
 
-[![Static Badge](https://img.shields.io/badge/add%20to%20Discord-7289DA?logo=discord&labelColor=FFFFFF)](https://discord.com/oauth2/authorize?client_id=1151028506470404096&scope=bot&permissions=11264) [![Static Badge](https://img.shields.io/badge/add%20to%20Discord%20(dev)-7289DA?logo=discord&labelColor=FFFFFF)
+[![Static Badge](https://img.shields.io/badge/add%20to%20Discord-7289DA?logo=discord&labelColor=FFFFFF)](https://discord.com/oauth2/authorize?client_id=1151028506470404096&scope=bot&permissions=11264)
+[![Static Badge](https://img.shields.io/badge/devs%20only-7289DA?logo=discord&labelColor=FFFFFF)
 ](https://discord.com/oauth2/authorize?client_id=1151570933543342101&scope=bot&permissions=11264)
+[![Release (GitHub)](https://img.shields.io/github/v/release/ebiiim/conbukun)](https://github.com/ebiiim/conbukun/releases/latest)
 
 Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用のDiscord Botです。
+
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [使い方](#%E4%BD%BF%E3%81%84%E6%96%B9)
+- [リリースノート](#%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%8E%E3%83%BC%E3%83%88)
+- [ライセンス](#%E3%83%A9%E3%82%A4%E3%82%BB%E3%83%B3%E3%82%B9)
+- [利用規約（Terms of Service）](#%E5%88%A9%E7%94%A8%E8%A6%8F%E7%B4%84terms-of-service)
+- [プライバシーポリシー（Privacy Policy）](#%E3%83%97%E3%83%A9%E3%82%A4%E3%83%90%E3%82%B7%E3%83%BC%E3%83%9D%E3%83%AA%E3%82%B7%E3%83%BCprivacy-policy)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## 使い方
 
@@ -31,7 +45,8 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 - 今後の課題
   - 機能: 会話（？）
   - 内部: マルチインスタンス対応（{リアクション|メンション}ハンドラのGuild ID対応）
-- 2023-xx-xx v0.x.x
+- 2023-09-19 v1.0.0
+  - 安定しているので正式リリース
   - 機能: `おたのしみ` プレゼンスぐるぐる
   - 機能: `おたのしみ` 反応いろいろ強化
   - 改善: `リアクション集計` どの投稿に対する集計かがわからなくなるのでリプライにした
@@ -48,3 +63,50 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 - 2023-09-13 v0.1.0
   - 記念すべき初回リリース
   - 機能: `/help` `/mule` `リアクション集計`
+
+## ライセンス
+
+- ソースコード: [MIT License](https://github.com/ebiiim/conbukun/blob/main/LICENSE)
+- ライブラリ: 各ライブラリのライセンスを参照のこと
+- 画像: `assets/README.md` を参照のこと
+
+## 利用規約（Terms of Service）
+
+発効日: 2023年9月19日<br>
+最終更新日: 2023年9月19日
+
+conbukun（本サービス）を利用する場合、ユーザーは次の利用規約に同意したものとします。
+
+- サービスを利用する権利: ユーザーは本サービスを[Discordの利用規約](https://discord.com/terms)および参加しているサーバーのルールに違反しない目的においてのみ利用できます。
+- 個人情報の扱い: ユーザーは、[プライバシーポリシー](#%E3%83%97%E3%83%A9%E3%82%A4%E3%83%90%E3%82%B7%E3%83%BC%E3%83%9D%E3%83%AA%E3%82%B7%E3%83%BCprivacy-policy)をよく読んで理解した上で同意する必要があります。
+
+---
+
+Effective date: September 19, 2023<br>
+Last updated: September 19, 2023
+
+By using conbukun（the Service） you automatically agree to our Terms of Service below.
+
+- Rights to use the service: You have the right to use the Service as long as you don't use it in any way that would break [Discord ToS](https://discord.com/terms) or the rules of the guild ("server") you are in.
+- Handling of personal data: You have to read, understand, and agree to the [Privacy Policy](#%E3%83%97%E3%83%A9%E3%82%A4%E3%83%90%E3%82%B7%E3%83%BC%E3%83%9D%E3%83%AA%E3%82%B7%E3%83%BCprivacy-policy).
+
+
+## プライバシーポリシー（Privacy Policy）
+
+発効日: 2023年9月19日<br>
+最終更新日: 2023年9月19日
+
+conbukun（本サービス）のプライバシーポリシーは次のとおりです。
+
+- データ閲覧: サービス提供のために、本サービスは本サービスのボットへのダイレクトメッセージおよび読み取り権限が付与されたチャンネルに限り、メッセージおよびリアクションを処理します。
+- データ収集: 分析のために、本サービスは本サービスのボットへのダイレクトメッセージおよび読み取り権限が付与されたチャンネルに限り、メッセージおよびリアクションを匿名化した上で収集します。
+
+---
+
+Effective date: September 19, 2023<br>
+Last updated: September 19, 2023
+
+The Privacy Policy of conbukun (the Service) is as follows.
+
+- View of data: In order to provide the service, the Service processes messages and reactions, limited to direct messages to the Service's bots and channels where read permissions have been granted.
+- Collection of data: For analytic purposes, the Service anonymously collects messages and reactions, limited to direct messages to the Service's bots and channels where read permissions have been granted.
