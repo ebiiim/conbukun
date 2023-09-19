@@ -59,6 +59,7 @@ const (
 	actMTG      = "MTG"
 	actTraining = "運動"
 	actSleep    = "すやすや"
+	actAO       = "Albion Online"
 )
 
 var (
@@ -71,6 +72,7 @@ var (
 		actMTG:      true,
 		actTraining: true,
 		actSleep:    false,
+		actAO:       false,
 	}
 	actDuration = map[string]time.Duration{
 		actWalking:  time.Minute * 25,
@@ -78,14 +80,15 @@ var (
 		actNap:      time.Minute * 45,
 		actFood:     time.Minute * 25,
 		actSnack:    time.Minute * 15,
-		actMTG:      time.Minute * 50,
+		actMTG:      time.Minute * 30,
 		actTraining: time.Minute * 30,
 		actSleep:    time.Minute * 80,
+		actAO:       time.Minute * 50,
 	}
 
-	actMorning = []string{actWalking, actToilet, actFood, actSnack, actTraining}
-	actEvening = []string{actWalking, actToilet, actNap, actFood, actSnack, actMTG}
-	actNight   = []string{actWalking, actToilet, actFood, actSnack, actMTG, actSleep}
+	actMorning = []string{actWalking, actToilet, actFood, actSnack, actTraining, actAO}
+	actEvening = []string{actWalking, actToilet, actNap, actFood, actSnack, actMTG, actAO}
+	actNight   = []string{actWalking, actToilet, actFood, actSnack, actMTG, actSleep, actAO}
 )
 
 func generatePresence(t time.Time) (status discordgo.Status, actName, actState string, actType discordgo.ActivityType, waitNext time.Duration) {
