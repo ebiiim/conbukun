@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"math/rand"
 	"strings"
 	"time"
 
@@ -119,16 +118,16 @@ func handleMessageCreateSayHello(s *discordgo.Session, m *discordgo.MessageCreat
 
 	switch {
 	case containsWords(m.Content, wordsConbu):
-		pickOne(map[uint8]string{
-			85: "わん",
-			5:  "にゃー",
-			10: "ぱぱ？",
+		reply = pickOne([]choice{
+			{80, "わん"},
+			{5, "にゃー"},
+			{15, "ぱぱ？"},
 		})
 	case containsWords(m.Content, wordsOha) || containsWords(m.Content, wordsKonn) || containsWords(m.Content, wordsBanwa) || containsWords(m.Content, wordsOyasu) || containsWords(m.Content, wordsOtiru):
-		pickOne(map[uint8]string{
-			17: "わん！",
-			3:  "にゃー！",
-			80: "",
+		reply = pickOne([]choice{
+			{17, "わん！"},
+			{3, "にゃー！"},
+			{80, ""},
 		})
 	}
 
@@ -148,24 +147,4 @@ func handleMessageCreateSayHello(s *discordgo.Session, m *discordgo.MessageCreat
 	if err != nil {
 		lg.Error().Err(err).Msg("could not send msg")
 	}
-}
-
-func pickOne(weightedChoices map[uint8]string) string {
-	sumWeight := 0
-	for w := range weightedChoices {
-		sumWeight += int(w)
-	}
-	if sumWeight == 0 {
-		return ""
-	}
-
-	choices := make([]string, sumWeight)
-	idx := 0
-	for w, c := range weightedChoices {
-		for i := 0; i < int(w); i++ {
-			choices[idx] = c
-			idx++
-		}
-	}
-	return choices[rand.Intn(sumWeight)]
 }

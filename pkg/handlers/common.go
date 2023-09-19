@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"math/rand"
 	"unicode"
 
 	"github.com/bwmarrin/discordgo"
@@ -105,4 +106,29 @@ func id2name(guildMembers []*discordgo.Member, id string) string {
 func sendSilentMessage(s *discordgo.Session, channelID string, data *discordgo.MessageSend, options ...discordgo.RequestOption) (st *discordgo.Message, err error) {
 	data.Flags |= discordgo.MessageFlagsSuppressNotifications
 	return s.ChannelMessageSendComplex(channelID, data, options...)
+}
+
+type choice struct {
+	Weight uint8
+	Data   string
+}
+
+func pickOne(choices []choice) string {
+	sumWeight := 0
+	for _, c := range choices {
+		sumWeight += int(c.Weight)
+	}
+	if sumWeight == 0 {
+		return ""
+	}
+
+	flattenChoices := make([]string, sumWeight)
+	idx := 0
+	for _, c := range choices {
+		for i := 0; i < int(c.Weight); i++ {
+			flattenChoices[idx] = c.Data
+			idx++
+		}
+	}
+	return flattenChoices[rand.Intn(sumWeight)]
 }

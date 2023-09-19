@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"math/rand"
 	"strings"
 	"time"
 
@@ -88,26 +87,26 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 var (
-	muleMsgs = []string{
-		"わん",
-		"ファッキンラバ",
-		"「これはラバbotです」（開発者より）",
-		"【ラバ教豆知識】戦闘ラバの重さは110kg",
-		"【ラバ教豆知識】ラバの重さは45kg",
-		// "> あなたはラバを信じますか？ | Do you believe in Mule? | Ты веришь в мула? | 你相信骡子吗？",
-		// "> ラバは世界を救います | Mule saves the world | мулы спасает мир | 骡子拯救世界",
-		// "> ラバさえあればいい | No Mule, no life | все, что тебе нужно, это мул | 你只需要一头骡子",
-		// "> ラバを讃えよ | Praise Mule | хвалите мула | 赞美骡子",
-		// "> ラバは不滅です | Mule is immortal | мул бессмертен | 骡子是不朽的",
-		// "> ラバ！ラバ！ラバ！ラバ！ラバ！ | Mule! Mule! Mule! Mule! Mule!",
-		"「あなたはラバを信じますか？」",
-		"「ラバは世界を救います」",
-		"「ラバさえあればいい」",
-		"「ラバを讃えよ」",
-		"「ラバは不滅です」",
-		"「ラバ！ラバ！ラバ！ラバ！ラバ！」",
-		"[mule-n-img](https://render.albiononline.com/v1/item/Novice's%20Mule.png)",
-		"[mule-b-img](https://render.albiononline.com/v1/item/Heretic%20Combat%20Mule.png)",
+	muleMsgs = []choice{
+		{10, "わん"},
+		{10, "ファッキンラバ"},
+		{4, "「これはラバbotです」（開発者より）"},
+		{10, "【ラバ教豆知識】戦闘ラバの重さは110kg"},
+		{10, "【ラバ教豆知識】ラバの重さは45kg"},
+		// {6, "> あなたはラバを信じますか？ | Do you believe in Mule? | Ты веришь в мула? | 你相信骡子吗？"},
+		// {6, "> ラバは世界を救います | Mule saves the world | мулы спасает мир | 骡子拯救世界"},
+		// {6, "> ラバさえあればいい | No Mule, no life | все, что тебе нужно, это мул | 你只需要一头骡子"},
+		// {6, "> ラバを讃えよ | Praise Mule | хвалите мула | 赞美骡子"},
+		// {6, "> ラバは不滅です | Mule is immortal | мул бессмертен | 骡子是不朽的"},
+		// {6, "> ラバ！ラバ！ラバ！ラバ！ラバ！ | Mule! Mule! Mule! Mule! Mule!"},
+		{6, "「あなたはラバを信じますか？」"},
+		{6, "「ラバは世界を救います」"},
+		{6, "「ラバさえあればいい」"},
+		{6, "「ラバを讃えよ」"},
+		{6, "「ラバは不滅です」"},
+		{6, "「ラバ！ラバ！ラバ！ラバ！ラバ！」"},
+		{6, "[mule-n-img](https://render.albiononline.com/v1/item/Novice's%20Mule.png)"},
+		{6, "[mule-b-img](https://render.albiononline.com/v1/item/Heretic%20Combat%20Mule.png)"},
 	}
 )
 
@@ -117,7 +116,7 @@ func handleCmdMule(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: muleMsgs[rand.Intn(len(muleMsgs))],
+			Content: pickOne(muleMsgs),
 			Flags:   discordgo.MessageFlagsSuppressNotifications,
 		},
 	}); err != nil {
