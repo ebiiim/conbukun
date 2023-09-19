@@ -12,14 +12,14 @@ import (
 const (
 	EmojiConbu01 = "icon_conbu01"
 	EmojiConbu02 = "icon_conbu02"
-	EmojiMa      = "ma"
+	EmojiTest01  = "ma"
 )
 
 var (
 	ReactionAddHandlers = map[string]func(s *discordgo.Session, r *discordgo.MessageReactionAdd){}
 
 	emojisReactionAddReactionStats    = []string{"👀", EmojiConbu02}
-	emojisReactionAddReactionRequired = []string{"🤖", EmojiConbu01, EmojiMa}
+	emojisReactionAddReactionRequired = []string{"🤖", EmojiConbu01, EmojiTest01}
 )
 
 func init() {
