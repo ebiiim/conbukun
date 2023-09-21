@@ -36,6 +36,7 @@ const (
 	CmdActReqMsg = "message"
 
 	FuncMessageCreateSayHello       = "message-create/say-hello"
+	FuncMessageCreateReplyHello     = "message-create/reply-hello"
 	FuncReactionAddReactionStats    = "reaction-add/reaction-stats"
 	FuncReactionAddReactionRequired = "reaction-add/reaction-required"
 )
