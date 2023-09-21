@@ -1,6 +1,6 @@
 module github.com/ebiiim/conbukun
 
-go 1.21.0
+go 1.21.1
 
 require (
 	github.com/bwmarrin/discordgo v0.27.2-0.20230907125633-a2079d3138d2
