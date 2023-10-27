@@ -12,4 +12,4 @@ RUN make build
 FROM gcr.io/distroless/base-debian11
 
 WORKDIR /
-COPY --from=0 /app/bin /usr/local/bin
+COPY --from=0 /app/bin /bin

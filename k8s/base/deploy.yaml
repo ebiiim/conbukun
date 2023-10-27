@@ -21,16 +21,16 @@ spec:
             - conbukun
             - -v=5
           env:
-            - name: CONBUKUN_GUILD_ID
-              valueFrom:
-                secretKeyRef:
-                  name: conbukun-secrets
-                  key: guild_id
             - name: CONBUKUN_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: conbukun-secrets
                   key: auth_token
+            - name: CONBUKUN_GUILD_ID
+              valueFrom:
+                secretKeyRef:
+                  name: conbukun-secrets
+                  key: guild_id
           resources:
             requests:
               cpu: 100m

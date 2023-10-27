@@ -16,7 +16,7 @@ import (
 	"github.com/ebiiim/conbukun/pkg/presence"
 )
 
-func run(gid string, token string) error {
+func run(token string, gid string) error {
 	s, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return err
@@ -106,19 +106,19 @@ func main() {
 
 	var logLevel int
 	flag.IntVar(&logLevel, "v", 3, "log level")
-	var gid string
-	flag.StringVar(&gid, "gid", "", "Guild ID or registers commands globally")
 	var token string
 	flag.StringVar(&token, "token", "", "Bot authentication token")
+	var gid string
+	flag.StringVar(&gid, "gid", "", "Guild ID or registers commands globally")
 	flag.Parse()
 
-	envGID := os.Getenv("CONBUKUN_GUILD_ID")
 	envToken := os.Getenv("CONBUKUN_AUTH_TOKEN")
-	if gid == "" {
-		gid = envGID
-	}
 	if token == "" {
 		token = envToken
+	}
+	envGID := os.Getenv("CONBUKUN_GUILD_ID")
+	if gid == "" {
+		gid = envGID
 	}
 
 	switch logLevel {
@@ -137,7 +137,7 @@ func main() {
 	}
 
 	lg.Info().Msgf("conbukun version=%v", version)
-	if err := run(gid, token); err != nil {
+	if err := run(token, gid); err != nil {
 		lg.Fatal().Err(err).Msg("stopped")
 	}
 }

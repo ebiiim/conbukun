@@ -11,22 +11,19 @@ import (
 
 const (
 	EmojiConbu01 = "icon_conbu01"
-	EmojiConbu02 = "icon_conbu02"
+	EmojiConbu02 = "icon_conbu02" // not used
 	EmojiTest01  = "ma"
 )
 
 var (
 	ReactionAddHandlers = map[string]func(s *discordgo.Session, r *discordgo.MessageReactionAdd){}
 
-	emojisReactionAddReactionStats    = []string{"👀", EmojiConbu02}
 	emojisReactionAddReactionRequired = []string{"🤖", EmojiConbu01, EmojiTest01}
 )
 
 func init() {
-	lg.Debug().Msgf("init: register ReactionAddHandlers")
-	// for _, emoji := range emojisReactionAddReactionStats {
-	// 	ReactionAddHandlers[emoji] = handleReactionAddReactionStats
-	// }
+	// register ReactionAddHandlers
+
 	for _, emoji := range emojisReactionAddReactionRequired {
 		ReactionAddHandlers[emoji] = handleReactionAddReactionRequired
 	}
@@ -49,142 +46,6 @@ func OnMessageReactionAdd(s *discordgo.Session, r *discordgo.MessageReactionAdd)
 		h(s, r)
 	}
 
-}
-
-func handleReactionAddReactionStats(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
-	if r.GuildID == "" {
-		lg.Debug().Msgf("ReactionAddReactionStats: return as no GuildID (this message is a DM)")
-		return
-	}
-
-	lg := lg.With().
-		Str(lkFunc, FuncReactionAddReactionStats).
-		Str(lkGuild, r.GuildID).
-		Str(lkCh, r.ChannelID).
-		Str(lkMID, r.MessageID).
-		Str(lkUsr, r.UserID).
-		Str(lkEmoji, r.Emoji.Name).
-		Str(lkEmojiA, r.Emoji.APIName()).
-		Logger()
-
-	lg.Info().Msgf("ReactionAddReactionStats: called")
-
-	if err := s.ChannelTyping(r.ChannelID); err != nil {
-		lg.Error().Err(err).Msg("could not send typing")
-	}
-
-	parentMsg, err := s.ChannelMessage(r.ChannelID, r.MessageID)
-	if err != nil {
-		lg.Error().Err(err).Msg("could not get message")
-		return
-	}
-
-	userEmojis := map[string]map[string]bool{} // user -> emojis
-	emojiUsers := map[string]map[string]bool{} // emoji -> users
-
-	for _, u := range parentMsg.Mentions {
-		userEmojis[u.Username] = map[string]bool{}
-	}
-	members, err := s.GuildMembers(r.GuildID, "", 1000)
-	if err != nil {
-		lg.Error().Err(err).Msg("could not get GuildMembers")
-		return
-	}
-	for _, role := range parentMsg.MentionRoles {
-		for _, member := range members {
-			if member.User.Bot {
-				continue // skip bots (because bots don't skip what they need to do)
-			}
-			for _, memberRole := range member.Roles {
-				if memberRole == role {
-					userEmojis[member.User.Username] = map[string]bool{}
-				}
-			}
-		}
-	}
-
-	for _, rt := range parentMsg.Reactions {
-		users, err := s.MessageReactions(r.ChannelID, parentMsg.ID, rt.Emoji.APIName(), 100, "", "")
-		if err != nil {
-			lg.Error().Err(err).Msg("could not get messagereactions")
-			continue
-		}
-		for _, u := range users {
-			if _, ok := userEmojis[u.Username]; !ok {
-				userEmojis[u.Username] = map[string]bool{}
-			}
-			userEmojis[u.Username][rt.Emoji.APIName()] = true
-			if _, ok := emojiUsers[rt.Emoji.APIName()]; !ok {
-				emojiUsers[rt.Emoji.APIName()] = map[string]bool{}
-			}
-			emojiUsers[rt.Emoji.APIName()][u.Username] = true
-		}
-	}
-
-	// drop self
-	delete(userEmojis, s.State.User.Username)
-	for _, e := range emojiUsers {
-		delete(e, s.State.User.Username)
-	}
-	// drop special emojis
-	guildEmojis, err := s.GuildEmojis(r.GuildID)
-	if err != nil {
-		lg.Error().Err(err).Msg("could not get GuildEmojis")
-	}
-	specialEmojis := []string{}
-	for _, emoji := range emojisReactionAddReactionStats {
-		specialEmojis = append(specialEmojis, getGuildEmojiAPINameByName(guildEmojis, emoji))
-	}
-	for _, u := range userEmojis {
-		for _, se := range specialEmojis {
-			delete(u, se)
-		}
-	}
-	for _, se := range specialEmojis {
-		delete(emojiUsers, se)
-	}
-
-	var emojiList []string
-	for emoji := range emojiUsers {
-		emojiList = append(emojiList, emoji)
-	}
-
-	var table strings.Builder
-	table.WriteString("集計しました（2分間表示）\n")
-	for _, emoji := range emojiList {
-		table.WriteString(emoji2msg(emoji))
-		table.WriteString(" | ")
-	}
-	table.WriteString("😀")
-	table.WriteString("\n")
-	for i := 0; i < len(emojiList)*5+10; i++ {
-		table.WriteRune('-')
-	}
-	table.WriteString("\n")
-	for user, emojis := range userEmojis {
-		for _, emoji := range emojiList {
-			if emojis[emoji] {
-				table.WriteString("✅")
-			} else {
-				table.WriteString("➖")
-			}
-			table.WriteString(" | ")
-		}
-		table.WriteString(fmt.Sprintf("`%s`", user))
-		table.WriteString("\n")
-	}
-	msg, err := sendSilentMessage(s, r.ChannelID, &discordgo.MessageSend{
-		Content: table.String(),
-	})
-	if err != nil {
-		lg.Error().Err(err).Msg("could not send msg")
-	}
-	time.AfterFunc(time.Second*120, func() {
-		lg.Info().Msgf("delete (AfterFunc)")
-		if err := s.ChannelMessageDelete(r.ChannelID, msg.ID); err != nil {
-			lg.Error().Err(err).Msg("could not delete msg (AfterFunc)")
-		}
-	})
 }
 
 func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
