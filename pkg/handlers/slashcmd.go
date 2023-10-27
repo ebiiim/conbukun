@@ -94,6 +94,7 @@ var (
 		{8, "「アルコールポーションうめぇ」（開発者より）"},
 		{10, "【ラバ教豆知識】戦闘ラバの重さは110kg"},
 		{10, "【ラバ教豆知識】ラバの重さは45kg"},
+		// too messy not cool
 		// {6, "> あなたはラバを信じますか？ | Do you believe in Mule? | Ты веришь в мула? | 你相信骡子吗？"},
 		// {6, "> ラバは世界を救います | Mule saves the world | мулы спасает мир | 骡子拯救世界"},
 		// {6, "> ラバさえあればいい | No Mule, no life | все, что тебе нужно, это мул | 你只需要一头骡子"},
@@ -108,10 +109,11 @@ var (
 		{6, "「ラバ！ラバ！ラバ！ラバ！ラバ！」"},
 		{6, "「シェイプシフターなぜラバに変身しない？」"},
 		{6, "「ハッピーハロウィン！ラバ万歳！」"},
-		{6, "[mount-jod-img](https://wiki.albiononline.com/data/images/4/4e/JackODonkeyMountSkin.png)"},
 		{6, "[mule-t2-img](https://render.albiononline.com/v1/item/Novice's%20Mule.png)"},
-		{6, "[mount-mule-t2-img](https://wiki.albiononline.com/data/images/e/e7/NovicesMule.png)"},
 		{6, "[mule-t6-img](https://render.albiononline.com/v1/item/Heretic%20Combat%20Mule.png)"},
+		// too large not displayed
+		// {6, "[mount-jod-img](https://wiki.albiononline.com/data/images/4/4e/JackODonkeyMountSkin.png)"},
+		// {6, "[mount-mule-t2-img](https://wiki.albiononline.com/data/images/e/e7/NovicesMule.png)"},
 	}
 )
 
