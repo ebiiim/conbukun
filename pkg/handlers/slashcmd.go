@@ -106,8 +106,12 @@ var (
 		{6, "「ラバを讃えよ」"},
 		{6, "「ラバは不滅です」"},
 		{6, "「ラバ！ラバ！ラバ！ラバ！ラバ！」"},
-		{6, "[mule-n-img](https://render.albiononline.com/v1/item/Novice's%20Mule.png)"},
-		{6, "[mule-b-img](https://render.albiononline.com/v1/item/Heretic%20Combat%20Mule.png)"},
+		{6, "「シェイプシフターなぜラバに変身しない？」"},
+		{6, "「ハッピーハロウィン！ラバ万歳！」"},
+		{6, "[mount-jod-img](https://wiki.albiononline.com/data/images/4/4e/JackODonkeyMountSkin.png)"},
+		{6, "[mule-t2-img](https://render.albiononline.com/v1/item/Novice's%20Mule.png)"},
+		{6, "[mount-mule-t2-img](https://wiki.albiononline.com/data/images/e/e7/NovicesMule.png)"},
+		{6, "[mule-t6-img](https://render.albiononline.com/v1/item/Heretic%20Combat%20Mule.png)"},
 	}
 )
 
