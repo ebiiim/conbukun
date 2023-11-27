@@ -36,7 +36,7 @@ func NewKrokiPlantUMLPainter(endpoint string, timeout time.Duration, mapData map
 	return p
 }
 
-func (p *KrokiPlantUMLPNGPainter) Paint(n Navigation) (path string, err error) {
+func (p *KrokiPlantUMLPNGPainter) Paint(n *Navigation) (path string, err error) {
 
 	pu, err := p.ToPlantUML(n)
 	if err != nil {
@@ -57,7 +57,7 @@ func (p *KrokiPlantUMLPNGPainter) Paint(n Navigation) (path string, err error) {
 	return
 }
 
-func (p *KrokiPlantUMLPNGPainter) ToPlantUML(n Navigation) (string, error) {
+func (p *KrokiPlantUMLPNGPainter) ToPlantUML(n *Navigation) (string, error) {
 	tmplData, err := p.NavigationToTemplateData(n, time.Now())
 	if err != nil {
 		// still continue
@@ -70,7 +70,7 @@ func (p *KrokiPlantUMLPNGPainter) ToPlantUML(n Navigation) (string, error) {
 	return buf.String(), nil
 }
 
-func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n Navigation, t time.Time) (templateData, error) {
+func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time.Time) (templateData, error) {
 
 	templateData := templateData{
 		GeneratedAt:  "ERROR",

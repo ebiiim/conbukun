@@ -25,7 +25,7 @@ func main() {
 		panic("map data not found")
 	}
 
-	n := roanav.Navigation{
+	n := &roanav.Navigation{
 		Name: "MyGuild (conbukun@v0.2.0)",
 		Portals: []*roanav.Portal{
 			roanav.NewPortal(mdSQV.ID, mdQQV.ID, roanav.PortalTypeBlue, time.Now().Add(3*time.Hour), map[string]string{roanav.PortalDataKeyUser: "user1"}),
