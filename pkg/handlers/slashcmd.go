@@ -51,11 +51,15 @@ var (
 						// TODO: implement
 						{
 							Name:  "QSV: Qiitun-Si-Vynsom",
-							Value: "HOGE-123",
+							Value: "TNL-365",
 						},
 						{
 							Name:  "QEV: Qiitun-Et-Vietis",
-							Value: "HOGE-456",
+							Value: "TNL-367",
+						},
+						{
+							Name:  "QV: Qiitun-Vietis",
+							Value: "TNL-167",
 						},
 					},
 					Required: true,
@@ -68,11 +72,15 @@ var (
 						// TODO: implement
 						{
 							Name:  "QSV: Qiitun-Si-Vynsom",
-							Value: "HOGE-123",
+							Value: "TNL-365",
 						},
 						{
 							Name:  "QEV: Qiitun-Et-Vietis",
-							Value: "HOGE-456",
+							Value: "TNL-367",
+						},
+						{
+							Name:  "QV: Qiitun-Vietis",
+							Value: "TNL-167",
 						},
 					},
 					Required: true,
@@ -83,12 +91,12 @@ var (
 					Type:        discordgo.ApplicationCommandOptionString,
 					Choices: []*discordgo.ApplicationCommandOptionChoice{
 						{
-							Name:  "Blue",
-							Value: "blue",
+							Name:  "Yellow",
+							Value: roanav.PortalTypeYellow,
 						},
 						{
-							Name:  "Yellow",
-							Value: "yellow",
+							Name:  "Blue",
+							Value: roanav.PortalTypeBlue,
 						},
 					},
 					Required: true,
@@ -229,7 +237,7 @@ func navigationName(s *discordgo.Session, i *discordgo.InteractionCreate) (strin
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s#%s", g.Name, c.Name), nil
+	return fmt.Sprintf("%s#%s (conbukun@%s)", g.Name, c.Name, Version), nil
 }
 
 func handleCmdRouteAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -238,6 +246,17 @@ func handleCmdRouteAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		// This command is only available in guilds.
 		// TODO: print ephemeral error message
 		return
+	}
+
+	// Fetch data.
+	members, err := s.GuildMembers(i.GuildID, "", 1000)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not get GuildMembers")
+		return
+	}
+	userName := id2name(members, i.Member.User.ID)
+	if userName == "" {
+		userName = i.Member.User.Username
 	}
 
 	// Get the Navigation.
@@ -254,10 +273,52 @@ func handleCmdRouteAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 	nav := navigations[navname]
+	nav.DeleteExpiredPortals()
 
 	// Get arguments.
-	_ = nav // TODO: implement
+	optFrom := i.ApplicationCommandData().Options[0]
+	optTo := i.ApplicationCommandData().Options[1]
+	optColor := i.ApplicationCommandData().Options[2]
+	optTime := i.ApplicationCommandData().Options[3]
+	from := optFrom.StringValue()
+	to := optTo.StringValue()
+	color := optColor.StringValue()
+	timeVal := optTime.IntValue()
+	timeMinute := timeVal % 100
+	timeHour := (timeVal - timeMinute) / 100
+	lg.Info().Str("from", from).Str("to", to).Str("color", color).Int("time", int(timeVal)).Msg("arguments")
 
+	// Validate arguments.
+	if from == to {
+		lg.Error().Err(fmt.Errorf("from and to are the same")).Msg("invalid arguments")
+		// TODO: print ephemeral error message
+		return
+	}
+	if timeHour < 0 || timeHour > 23 || timeMinute < 0 || timeMinute > 59 {
+		lg.Error().Err(fmt.Errorf("invalid time")).Msg("invalid arguments")
+		// TODO: print ephemeral error message
+		return
+	}
+
+	portal := roanav.NewPortal(
+		from, to,
+		color,
+		time.Now().Add(time.Hour*time.Duration(timeHour)+time.Minute*time.Duration(timeMinute)),
+		map[string]string{
+			roanav.PortalDataKeyUser: userName,
+		},
+	)
+	nav.AddPortal(portal)
+
+	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("わん！いまこんな感じ！ `/route-print` で画像を投稿するわん！\n```%s```", roanav.BriefNavigation(nav, data.Maps)),
+			Flags:   discordgo.MessageFlagsEphemeral | discordgo.MessageFlagsSuppressEmbeds | discordgo.MessageFlagsSuppressNotifications,
+		},
+	}); err != nil {
+		lg.Error().Err(err).Msg("could not send InteractionResponse")
+	}
 }
 
 func handleCmdRoutePrint(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -281,7 +342,13 @@ func handleCmdRoutePrint(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Portals: []*roanav.Portal{},
 		}
 	}
-	nav := navigations[navname] // TODO: check if the Navigation is empty
+	nav := navigations[navname]
+	nav.DeleteExpiredPortals()
+	if nav.Portals == nil || len(nav.Portals) == 0 {
+		lg.Error().Err(fmt.Errorf("no portals")).Msg("len(nav.Portals) == 0")
+		// TODO: print ephemeral error message
+		return
+	}
 
 	// Generate PlantUML.
 	p := roanav.NewKrokiPlantUMLPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps)

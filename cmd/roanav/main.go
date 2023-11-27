@@ -33,8 +33,11 @@ func main() {
 			roanav.NewPortal(mdQQV.ID, mdQV.ID, roanav.PortalTypeBlue, time.Now().Add(-3*time.Hour), map[string]string{roanav.PortalDataKeyUser: "user3"}),
 		},
 	}
-
 	n.DeleteExpiredPortals()
+
+	fmt.Println(roanav.BriefNavigation(n, data.Maps))
+
+	fmt.Print("\n\n\n")
 
 	s, err := p.ToPlantUML(n)
 	if err != nil {
@@ -43,6 +46,7 @@ func main() {
 	fmt.Println(s)
 
 	fmt.Print("\n\n\n")
+
 	path, err := p.Paint(n)
 	if err != nil {
 		panic(err)

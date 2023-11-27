@@ -159,15 +159,13 @@ func init() {
 	tmpl = template.Must(template.New("plantuml").Parse(`
 @startuml
 
-caption "Generated At: {{ .GeneratedAt }}\nContributors: {{ .Contributors }}\n{{ .Credit }}"
-
+caption "Contributors: {{ .Contributors }}\nTimestamp: {{ .GeneratedAt }}\nAffiliation: {{ .Credit }}"
 {{ range $val := .Agents }}
 agent "{{ $val.Name }}" as {{ $val.Alias }}
-{{end}}
-
+{{- end}}
 {{ range $val := .Links }}
 {{ $val.FromAlias }} <-[#{{ $val.Color }}]-> {{ $val.ToAlias }} : "{{ $val.Duration }}"
-{{end}}
+{{- end}}
 
 @enduml
 `))
