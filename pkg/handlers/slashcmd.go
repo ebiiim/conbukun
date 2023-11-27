@@ -1,10 +1,15 @@
 package handlers
 
 import (
+	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+
+	"github.com/ebiiim/conbukun/pkg/ao/data"
+	"github.com/ebiiim/conbukun/pkg/ao/roanav"
 )
 
 func OnInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -34,11 +39,81 @@ var (
 			Name:        CmdMule,
 			Description: "こんぶくんがラバ教の経典から引用してくれる（30秒後に自動削除）",
 		},
+		{
+			Name:        CmdRouteAdd,
+			Description: "アバロンのルートを追加する",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "from",
+					Description: "出発地",
+					Type:        discordgo.ApplicationCommandOptionString,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						// TODO: implement
+						{
+							Name:  "QSV: Qiitun-Si-Vynsom",
+							Value: "HOGE-123",
+						},
+						{
+							Name:  "QEV: Qiitun-Et-Vietis",
+							Value: "HOGE-456",
+						},
+					},
+					Required: true,
+				},
+				{
+					Name:        "to",
+					Description: "目的地",
+					Type:        discordgo.ApplicationCommandOptionString,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						// TODO: implement
+						{
+							Name:  "QSV: Qiitun-Si-Vynsom",
+							Value: "HOGE-123",
+						},
+						{
+							Name:  "QEV: Qiitun-Et-Vietis",
+							Value: "HOGE-456",
+						},
+					},
+					Required: true,
+				},
+				{
+					Name:        "color",
+					Description: "ポータルの色",
+					Type:        discordgo.ApplicationCommandOptionString,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						{
+							Name:  "Blue",
+							Value: "blue",
+						},
+						{
+							Name:  "Yellow",
+							Value: "yellow",
+						},
+					},
+					Required: true,
+				},
+				{
+					Name:        "time",
+					Description: "残り時間（4桁 hhmm）",
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					MinValue:    Ptr(0.0),
+					MaxValue:    2359.0,
+					Required:    true,
+				},
+			},
+		},
+		{
+			Name:        CmdRoutePrint,
+			Description: "アバロンのルートを表示する",
+		},
 	}
 
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		CmdHelp: handleCmdHelp,
-		CmdMule: handleCmdMule,
+		CmdHelp:       handleCmdHelp,
+		CmdMule:       handleCmdMule,
+		CmdRouteAdd:   handleCmdRouteAdd,
+		CmdRoutePrint: handleCmdRoutePrint,
 	}
 )
 
@@ -134,4 +209,108 @@ func handleCmdMule(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			lg.Error().Err(err).Msg("could not delete InteractionResponse (AfterFunc)")
 		}
 	})
+}
+
+var (
+	// TODO: make this private, persistent and thread-safe
+	navigations = map[string]*roanav.Navigation{}
+)
+
+func init() {
+	navigations = map[string]*roanav.Navigation{}
+}
+
+func navigationName(s *discordgo.Session, i *discordgo.InteractionCreate) (string, error) {
+	c, err := s.State.Channel(i.ChannelID)
+	if err != nil {
+		return "", err
+	}
+	g, err := s.State.Guild(c.GuildID)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s#%s", g.Name, c.Name), nil
+}
+
+func handleCmdRouteAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	lg := lg.With().Str(lkCmd, CmdRouteAdd).Str(lkIID, i.ID).Logger()
+	if i.Member == nil {
+		// This command is only available in guilds.
+		// TODO: print ephemeral error message
+		return
+	}
+
+	// Get the Navigation.
+	navname, err := navigationName(s, i)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not get navigation name")
+		// TODO: print ephemeral error message
+		return
+	}
+	if _, ok := navigations[navname]; !ok {
+		navigations[navname] = &roanav.Navigation{
+			Name:    navname,
+			Portals: []*roanav.Portal{},
+		}
+	}
+	nav := navigations[navname]
+
+	// Get arguments.
+	_ = nav // TODO: implement
+
+}
+
+func handleCmdRoutePrint(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	lg := lg.With().Str(lkCmd, CmdRoutePrint).Str(lkIID, i.ID).Logger()
+	if i.Member == nil {
+		// This command is only available in guilds.
+		// TODO: print ephemeral error message
+		return
+	}
+
+	// Get the Navigation.
+	navname, err := navigationName(s, i)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not get navigation name")
+		// TODO: print ephemeral error message
+		return
+	}
+	if _, ok := navigations[navname]; !ok {
+		navigations[navname] = &roanav.Navigation{
+			Name:    navname,
+			Portals: []*roanav.Portal{},
+		}
+	}
+	nav := navigations[navname] // TODO: check if the Navigation is empty
+
+	// Generate PlantUML.
+	p := roanav.NewKrokiPlantUMLPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps)
+	dist, err := p.Paint(nav)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not generate PlantUML")
+		// TODO: print ephemeral error message
+		return
+	}
+
+	// Send PNG.
+	pngFile, err := os.Open(dist)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not open PNG file")
+	}
+	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("%s お待たせだわん", i.Member.User.Mention()),
+			Flags:   discordgo.MessageFlagsSuppressNotifications,
+			Files: []*discordgo.File{
+				{
+					Name:        dist, // unsafe chars will be stripped
+					ContentType: "image/png",
+					Reader:      pngFile,
+				},
+			},
+		},
+	}); err != nil {
+		lg.Error().Err(err).Msg("could not send InteractionResponse")
+	}
 }
