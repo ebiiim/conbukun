@@ -4,8 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"fmt"
-	"os"
 )
 
 type world struct {
@@ -76,10 +74,15 @@ func init() {
 			}
 		}
 
-		if mapdata.Distribution.Resources == nil {
-			fmt.Fprintf(os.Stderr, "failed to parse resources: %s\n", c.ID)
-		}
-
 		Maps[c.ID] = mapdata
 	}
+}
+
+func GetMapDataFromName(displayName string) (MapData, bool) {
+	for _, m := range Maps {
+		if m.DisplayName == displayName {
+			return m, true
+		}
+	}
+	return MapData{}, false
 }

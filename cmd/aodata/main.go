@@ -11,4 +11,9 @@ func main() {
 		fmt.Printf("%+v\n", k)
 		fmt.Printf("\t%+v\n", v)
 	}
+
+	fmt.Print("\n\n\n")
+
+	m, _ := data.GetMapDataFromName("Qiitun-Vietis")
+	fmt.Printf("%+v\n", m)
 }
