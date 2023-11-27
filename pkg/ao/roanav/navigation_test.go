@@ -15,6 +15,7 @@ func TestNewPortal(t *testing.T) {
 		map2      string
 		typ       string
 		expiredAt time.Time
+		data      map[string]string
 	}
 	tests := []struct {
 		name string
@@ -23,18 +24,18 @@ func TestNewPortal(t *testing.T) {
 	}{
 		{
 			name: "normal",
-			args: args{map1: "a", map2: "b", typ: PortalTypeBlue, expiredAt: timeNow},
-			want: &Portal{From: "a", To: "b", Type: PortalTypeBlue, ExpiredAt: timeNow},
+			args: args{map1: "a", map2: "b", typ: PortalTypeBlue, expiredAt: timeNow, data: nil},
+			want: &Portal{From: "a", To: "b", Type: PortalTypeBlue, ExpiredAt: timeNow, Data: map[string]string{}},
 		},
 		{
 			name: "sort",
-			args: args{map1: "b", map2: "a", typ: PortalTypeYellow, expiredAt: timeNow},
-			want: &Portal{From: "a", To: "b", Type: PortalTypeYellow, ExpiredAt: timeNow},
+			args: args{map1: "b", map2: "a", typ: PortalTypeYellow, expiredAt: timeNow, data: map[string]string{"x": "y"}},
+			want: &Portal{From: "a", To: "b", Type: PortalTypeYellow, ExpiredAt: timeNow, Data: map[string]string{"x": "y"}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewPortal(tt.args.map1, tt.args.map2, tt.args.typ, tt.args.expiredAt, nil); !reflect.DeepEqual(got, tt.want) {
+			if got := NewPortal(tt.args.map1, tt.args.map2, tt.args.typ, tt.args.expiredAt, tt.args.data); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewPortal() = %v, want %v", got, tt.want)
 			}
 		})
