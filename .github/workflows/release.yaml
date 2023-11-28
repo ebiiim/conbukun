@@ -8,13 +8,19 @@ jobs:
     name: Release on GitHub
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # fetch tags
+          submodules: recursive
       - uses: softprops/action-gh-release@v1
   image:
     name: Push container image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # fetch tags
+          submodules: recursive
       - uses: docker/metadata-action@v4
         id: meta
         with:
@@ -40,9 +46,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # we need git tags
+          fetch-depth: 0 # fetch tags
+          submodules: recursive
       - name: Set up Go
         uses: actions/setup-go@v4
         with:

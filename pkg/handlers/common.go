@@ -31,9 +31,11 @@ const (
 )
 
 const (
-	CmdHelp      = "help"
-	CmdMule      = "mule"
-	CmdActReqMsg = "message"
+	CmdHelp       = "help"
+	CmdMule       = "mule"
+	CmdRouteAdd   = "route-add"
+	CmdRoutePrint = "route-print"
+	CmdActReqMsg  = "message"
 
 	FuncMessageCreateSayHello       = "message-create/say-hello"
 	FuncMessageCreateReplyHello     = "message-create/reply-hello"
@@ -132,4 +134,8 @@ func pickOne(choices []choice) string {
 		}
 	}
 	return flattenChoices[rand.Intn(sumWeight)]
+}
+
+func Ptr[T any](v T) *T {
+	return &v
 }

@@ -1,0 +1,3 @@
+[submodule "pkg/ao/data/ao-bin-dumps"]
+	path = pkg/ao/data/ao-bin-dumps
+	url = https://github.com/ao-data/ao-bin-dumps
