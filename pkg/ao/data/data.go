@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"strings"
+	"unicode"
 
 	_ "embed"
 )
@@ -95,60 +96,117 @@ func GetMapDataFromName(displayName string) (MapData, bool) {
 // MapTypes
 // cat pkg/ao/data/ao-bin-dumps/cluster/world.json | jq .world.clusters | jq '.cluster[]."@type"' | sort | uniq
 const (
-	MapTypeOpenpvpBlack1     = "OPENPVP_BLACK_1"
-	MapTypeOpenpvpBlack2     = "OPENPVP_BLACK_2"
-	MapTypeOpenpvpBlack3     = "OPENPVP_BLACK_3"
-	MapTypeOpenpvpBlack4     = "OPENPVP_BLACK_4"
-	MapTypeOpenpvpBlack5     = "OPENPVP_BLACK_5"
-	MapTypeOpenpvpBlack6     = "OPENPVP_BLACK_6"
-	MapTypeOpenpvpRed        = "OPENPVP_RED"
-	MapTypeOpenpvpYellow     = "OPENPVP_YELLOW"
-	MapTypeSafearea          = "SAFEAREA"
-	MapTypeTunnelBlackHigh   = "TUNNEL_BLACK_HIGH"
-	MapTypeTunnelBlackLow    = "TUNNEL_BLACK_LOW"
-	MapTypeTunnelBlackMedium = "TUNNEL_BLACK_MEDIUM"
-	MapTypeTunnelDeep        = "TUNNEL_DEEP"
-	MapTypeTunnelDeepRaid    = "TUNNEL_DEEP_RAID"
-	MapTypeTunnelHideout     = "TUNNEL_HIDEOUT"
-	MapTypeTunnelHideoutDeep = "TUNNEL_HIDEOUT_DEEP"
-	MapTypeTunnelHigh        = "TUNNEL_HIGH"
-	MapTypeTunnelLow         = "TUNNEL_LOW"
-	MapTypeTunnelMedium      = "TUNNEL_MEDIUM"
-	MapTypeTunnelRoyal       = "TUNNEL_ROYAL"
+	MapTypeRawOpenpvpBlack1                        = "OPENPVP_BLACK_1"
+	MapTypeRawOpenpvpBlack2                        = "OPENPVP_BLACK_2"
+	MapTypeRawOpenpvpBlack3                        = "OPENPVP_BLACK_3"
+	MapTypeRawOpenpvpBlack4                        = "OPENPVP_BLACK_4"
+	MapTypeRawOpenpvpBlack5                        = "OPENPVP_BLACK_5"
+	MapTypeRawOpenpvpBlack6                        = "OPENPVP_BLACK_6"
+	MapTypeRawOpenpvpRed                           = "OPENPVP_RED"
+	MapTypeRawOpenpvpYellow                        = "OPENPVP_YELLOW"
+	MapTypeRawSafearea                             = "SAFEAREA" // blue
+	MapTypeRawTunnelBlackHigh                      = "TUNNEL_BLACK_HIGH"
+	MapTypeRawTunnelBlackLow                       = "TUNNEL_BLACK_LOW"
+	MapTypeRawTunnelBlackMedium                    = "TUNNEL_BLACK_MEDIUM"
+	MapTypeRawTunnelDeep                           = "TUNNEL_DEEP"
+	MapTypeRawTunnelDeepRaid                       = "TUNNEL_DEEP_RAID"
+	MapTypeRawTunnelHideout                        = "TUNNEL_HIDEOUT"
+	MapTypeRawTunnelHideoutDeep                    = "TUNNEL_HIDEOUT_DEEP"
+	MapTypeRawTunnelHigh                           = "TUNNEL_HIGH"
+	MapTypeRawTunnelLow                            = "TUNNEL_LOW"
+	MapTypeRawTunnelMedium                         = "TUNNEL_MEDIUM"
+	MapTypeRawTunnelRoyal                          = "TUNNEL_ROYAL"
+	MapTypeRawPlayercityBlack                      = "PLAYERCITY_BLACK"                        // Brecilien, Rests
+	MapTypeRawPlayercityBlackRoyal                 = "PLAYERCITY_BLACK_ROYAL"                  // Caerleon
+	MapTypeRawPlayercityBlackPortalcityNofurniture = "PLAYERCITY_BLACK_PORTALCITY_NOFURNITURE" // Portals
+	MapTypeRawPlayercitySafearea01                 = "PLAYERCITY_SAFEAREA_01"                  // Martlock, Thetford, Bridgewatch
+	MapTypeRawPlayercitySafearea02                 = "PLAYERCITY_SAFEAREA_02"                  // Fort Sterling, Lymhurst
+)
+
+// User friendly map types
+const (
+	MapTypeUnknown    = "Unknown"
+	MapTypeBlackZone  = "Black"
+	MapTypeRedZone    = "Red"
+	MapTypeYellowZone = "Yellow"
+	MapTypeBlueZone   = "Blue"
+	MapTypeAvalon     = "Avalon"
+	MapTypeCity       = "City"
 )
 
 var (
-	MapTypesBlack = []string{
-		MapTypeOpenpvpBlack1,
-		MapTypeOpenpvpBlack2,
-		MapTypeOpenpvpBlack3,
-		MapTypeOpenpvpBlack4,
-		MapTypeOpenpvpBlack5,
-		MapTypeOpenpvpBlack6,
+	MapTypesBlackZone = []string{
+		MapTypeRawOpenpvpBlack1,
+		MapTypeRawOpenpvpBlack2,
+		MapTypeRawOpenpvpBlack3,
+		MapTypeRawOpenpvpBlack4,
+		MapTypeRawOpenpvpBlack5,
+		MapTypeRawOpenpvpBlack6,
 	}
-	MapTypesRed = []string{
-		MapTypeOpenpvpRed,
+	MapTypesRedZone = []string{
+		MapTypeRawOpenpvpRed,
 	}
-	MapTypesYellow = []string{
-		MapTypeOpenpvpYellow,
+	MapTypesYellowZone = []string{
+		MapTypeRawOpenpvpYellow,
 	}
-	MapTypesBlue = []string{
-		MapTypeSafearea,
+	MapTypesBlueZone = []string{
+		MapTypeRawSafearea,
 	}
-	MapTypesTunnel = []string{
-		MapTypeTunnelBlackHigh,
-		MapTypeTunnelBlackLow,
-		MapTypeTunnelBlackMedium,
-		MapTypeTunnelDeep,
-		MapTypeTunnelDeepRaid,
-		MapTypeTunnelHideout,
-		MapTypeTunnelHideoutDeep,
-		MapTypeTunnelHigh,
-		MapTypeTunnelLow,
-		MapTypeTunnelMedium,
-		MapTypeTunnelRoyal,
+	MapTypesAvalon = []string{
+		MapTypeRawTunnelBlackHigh,
+		MapTypeRawTunnelBlackLow,
+		MapTypeRawTunnelBlackMedium,
+		MapTypeRawTunnelDeep,
+		MapTypeRawTunnelDeepRaid,
+		MapTypeRawTunnelHideout,
+		MapTypeRawTunnelHideoutDeep,
+		MapTypeRawTunnelHigh,
+		MapTypeRawTunnelLow,
+		MapTypeRawTunnelMedium,
+		MapTypeRawTunnelRoyal,
+	}
+	MapTypesCity = []string{
+		MapTypeRawPlayercityBlack,
+		MapTypeRawPlayercityBlackRoyal,
+		MapTypeRawPlayercityBlackPortalcityNofurniture,
+		MapTypeRawPlayercitySafearea01,
+		MapTypeRawPlayercitySafearea02,
 	}
 )
+
+func GetMapType(mapData MapData) string {
+	for _, t := range MapTypesBlackZone {
+		if t == mapData.Type {
+			return MapTypeBlackZone
+		}
+	}
+	for _, t := range MapTypesRedZone {
+		if t == mapData.Type {
+			return MapTypeRedZone
+		}
+	}
+	for _, t := range MapTypesYellowZone {
+		if t == mapData.Type {
+			return MapTypeYellowZone
+		}
+	}
+	for _, t := range MapTypesBlueZone {
+		if t == mapData.Type {
+			return MapTypeBlueZone
+		}
+	}
+	for _, t := range MapTypesAvalon {
+		if t == mapData.Type {
+			return MapTypeAvalon
+		}
+	}
+	for _, t := range MapTypesCity {
+		if t == mapData.Type {
+			return MapTypeCity
+		}
+	}
+	return MapTypeUnknown
+}
 
 // Tiers
 const (
@@ -184,4 +242,21 @@ func GetMapTier(mapData MapData) string {
 	default:
 		return TierErr
 	}
+}
+
+func GetMapShortName(mapData MapData) string {
+	if GetMapType(mapData) != MapTypeAvalon {
+		return ""
+	}
+
+	displayName := mapData.DisplayName
+	shortName := ""
+
+	for _, c := range displayName {
+		if unicode.IsUpper(c) {
+			shortName += string(c)
+		}
+	}
+
+	return shortName
 }

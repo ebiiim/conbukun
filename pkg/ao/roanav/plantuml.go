@@ -147,7 +147,13 @@ func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string) (template
 		return d, fmt.Errorf("map data not found: %s", portalID)
 	}
 
-	d.Name = md.DisplayName
+	mapName := md.DisplayName
+	shortName := data.GetMapShortName(md)
+	if shortName != "" {
+		mapName = fmt.Sprintf("[%s] %s", shortName, mapName) // "[SO] Suyos-Onaytum"
+	}
+
+	d.Name = fmt.Sprintf("%s\\n%s %s", mapName, data.GetMapType(md), data.GetMapTier(md))
 	d.Alias = toAlias(portalID)
 
 	return d, nil

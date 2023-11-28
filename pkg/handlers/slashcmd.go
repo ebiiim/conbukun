@@ -30,91 +30,71 @@ func OnInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 var (
-	Commands = []*discordgo.ApplicationCommand{
-		{
-			Name:        CmdHelp,
-			Description: "こんぶくんについて知る",
-		},
-		{
-			Name:        CmdMule,
-			Description: "こんぶくんがラバ教の経典から引用してくれる（30秒後に自動削除）",
-		},
-		{
-			Name:        CmdRouteAdd,
-			Description: "アバロンのルートを追加する",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "from",
-					Description: "出発地",
-					Type:        discordgo.ApplicationCommandOptionString,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						// TODO: implement
-						{
-							Name:  "QSV: Qiitun-Si-Vynsom",
-							Value: "TNL-365",
-						},
-						{
-							Name:  "QEV: Qiitun-Et-Vietis",
-							Value: "TNL-367",
-						},
-						{
-							Name:  "QV: Qiitun-Vietis",
-							Value: "TNL-167",
-						},
+	AppCmdHelp = &discordgo.ApplicationCommand{
+		Name:        CmdHelp,
+		Description: "こんぶくんについて知る",
+	}
+
+	AppCmdMule = &discordgo.ApplicationCommand{
+		Name:        CmdMule,
+		Description: "こんぶくんがラバ教の経典から引用してくれる（30秒後に自動削除）",
+	}
+
+	AppCmdRouteAdd = &discordgo.ApplicationCommand{
+		Name:        CmdRouteAdd,
+		Description: "アバロンのルートを追加する",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "from",
+				Description: "出発地",
+				Type:        discordgo.ApplicationCommandOptionString,
+				Choices:     nil, // initialized in init()
+				Required:    true,
+			},
+			{
+				Name:        "to",
+				Description: "目的地",
+				Type:        discordgo.ApplicationCommandOptionString,
+				Choices:     nil, // initialized in init()
+				Required:    true,
+			},
+			{
+				Name:        "color",
+				Description: "ポータルの色",
+				Type:        discordgo.ApplicationCommandOptionString,
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{
+						Name:  "Yellow",
+						Value: roanav.PortalTypeYellow,
 					},
-					Required: true,
-				},
-				{
-					Name:        "to",
-					Description: "目的地",
-					Type:        discordgo.ApplicationCommandOptionString,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						// TODO: implement
-						{
-							Name:  "QSV: Qiitun-Si-Vynsom",
-							Value: "TNL-365",
-						},
-						{
-							Name:  "QEV: Qiitun-Et-Vietis",
-							Value: "TNL-367",
-						},
-						{
-							Name:  "QV: Qiitun-Vietis",
-							Value: "TNL-167",
-						},
+					{
+						Name:  "Blue",
+						Value: roanav.PortalTypeBlue,
 					},
-					Required: true,
 				},
-				{
-					Name:        "color",
-					Description: "ポータルの色",
-					Type:        discordgo.ApplicationCommandOptionString,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Yellow",
-							Value: roanav.PortalTypeYellow,
-						},
-						{
-							Name:  "Blue",
-							Value: roanav.PortalTypeBlue,
-						},
-					},
-					Required: true,
-				},
-				{
-					Name:        "time",
-					Description: "残り時間（4桁 hhmm）",
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					MinValue:    Ptr(0.0),
-					MaxValue:    2359.0,
-					Required:    true,
-				},
+				Required: true,
+			},
+			{
+				Name:        "time",
+				Description: "残り時間（4桁 hhmm）",
+				Type:        discordgo.ApplicationCommandOptionInteger,
+				MinValue:    Ptr(0.0),
+				MaxValue:    2359.0,
+				Required:    true,
 			},
 		},
-		{
-			Name:        CmdRoutePrint,
-			Description: "アバロンのルートを表示する",
-		},
+	}
+
+	AppCmdRoutePrint = &discordgo.ApplicationCommand{
+		Name:        CmdRoutePrint,
+		Description: "アバロンのルートを表示する",
+	}
+
+	Commands = []*discordgo.ApplicationCommand{
+		AppCmdHelp,
+		AppCmdMule,
+		AppCmdRouteAdd,
+		AppCmdRoutePrint,
 	}
 
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
@@ -124,6 +104,33 @@ var (
 		CmdRoutePrint: handleCmdRoutePrint,
 	}
 )
+
+func init() {
+	AppCmdRouteAdd.Options[0].Choices = choicesFromMaps(data.Maps)[0:20] // FIXME: CRITICAL: must be 25 or less but we need more
+	AppCmdRouteAdd.Options[1].Choices = choicesFromMaps(data.Maps)[0:20] // FIXME: CRITICAL: must be 25 or less but we need more
+}
+
+func choicesFromMaps(maps map[string]data.MapData) []*discordgo.ApplicationCommandOptionChoice {
+	var choices []*discordgo.ApplicationCommandOptionChoice
+
+	for _, md := range maps {
+		choiceName := ""
+		choiceValue := md.ID
+
+		switch data.GetMapType(md) {
+		case data.MapTypeBlackZone, data.MapTypeRedZone, data.MapTypeYellowZone, data.MapTypeBlueZone, data.MapTypeCity:
+			choiceName = md.DisplayName
+		case data.MapTypeAvalon:
+			choiceName = fmt.Sprintf("[%s] %s", data.GetMapShortName(md), md.DisplayName)
+		default:
+			continue
+		}
+
+		choices = append(choices, &discordgo.ApplicationCommandOptionChoice{Name: choiceName, Value: choiceValue})
+	}
+
+	return choices
+}
 
 func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdHelp).Str(lkIID, i.ID).Logger()
