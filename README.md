@@ -80,7 +80,7 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 ## ライセンス
 
 - ソースコード: [MIT License](https://github.com/ebiiim/conbukun/blob/main/LICENSE)
-- ライブラリ: 各ライブラリのライセンスを参照のこと
+- ライブラリおよびサブモジュール: それぞれのライセンスを参照のこと
 - 画像: `assets/README.md` を参照のこと
 
 ## 利用規約（Terms of Service）
