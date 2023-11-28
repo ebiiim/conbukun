@@ -350,7 +350,7 @@ func handleCmdRouteAddCommand(s *discordgo.Session, i *discordgo.InteractionCrea
 	nav.AddPortal(portal)
 
 	if mErr := respondWithEphemeralMessage(s, i,
-		fmt.Sprintf("追加したわん！いまこんな感じ！ `/route-print` で画像を投稿するわん！\n%s", roanav.BriefNavigation(nav, data.Maps)),
+		fmt.Sprintf("追加したわん！いまこんな感じ！\n%s`/route-print` で画像を投稿できるわん！", roanav.BriefNavigation(nav, data.Maps)),
 	); mErr != nil {
 		lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 	}
