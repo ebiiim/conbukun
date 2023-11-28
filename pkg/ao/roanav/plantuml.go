@@ -8,10 +8,14 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	kroki "github.com/yuzutech/kroki-go"
 
 	"github.com/ebiiim/conbukun/pkg/ao/data"
 )
+
+var lg zerolog.Logger = log.With().Str("component", "conbukun/pkg/ao/roanav").Logger()
 
 type KrokiPlantUMLPNGPainter struct {
 	Client  kroki.Client
@@ -26,6 +30,7 @@ const (
 )
 
 func NewKrokiPlantUMLPainter(endpoint string, timeout time.Duration, mapData map[string]data.MapData) *KrokiPlantUMLPNGPainter {
+	lg.Info().Str("func", "NewKrokiPlantUMLPainter").Msgf("endpoint=%s, timeout=%s, len(mapData)=%d", endpoint, timeout, len(mapData))
 	p := &KrokiPlantUMLPNGPainter{
 		Client: kroki.New(kroki.Configuration{
 			URL:     endpoint,
@@ -37,12 +42,14 @@ func NewKrokiPlantUMLPainter(endpoint string, timeout time.Duration, mapData map
 }
 
 func (p *KrokiPlantUMLPNGPainter) Paint(n *Navigation) (path string, err error) {
+	lg := lg.With().Str("func", "Paint").Str("Navigation.Name", n.Name).Logger()
 
 	pu, err := p.ToPlantUML(n)
 	if err != nil {
 		return "", err
 	}
 
+	lg.Debug().Str("PlantUML", pu).Msg("sending to kroki...")
 	result, err := p.Client.FromString(pu, kroki.PlantUML, kroki.PNG)
 	if err != nil {
 		return "", err
@@ -58,10 +65,11 @@ func (p *KrokiPlantUMLPNGPainter) Paint(n *Navigation) (path string, err error) 
 }
 
 func (p *KrokiPlantUMLPNGPainter) ToPlantUML(n *Navigation) (string, error) {
+	lg := lg.With().Str("func", "ToPlantUML").Str("Navigation.Name", n.Name).Logger()
+
 	tmplData, err := p.NavigationToTemplateData(n, time.Now())
 	if err != nil {
-		// still continue
-		// TODO: log
+		lg.Warn().Err(err).Msg("p.NavigationToTemplateData got more than one error (still continuing)")
 	}
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, tmplData); err != nil {
@@ -128,7 +136,7 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 			FromAlias: aliasFrom,
 			ToAlias:   aliasTo,
 			// 2h30m0s -> 2h30m
-			// NOTE: less than 1 minute is not shown (a trivial issue)
+			// NOTE: less than 1 minute is not shown (wontfix as this is a trivial issue)
 			Duration: strings.TrimSuffix(portal.ExpiredAt.Sub(t).Truncate(time.Minute).String(), "0s"),
 			Color:    color,
 		})

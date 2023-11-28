@@ -76,7 +76,7 @@ var (
 			},
 			{
 				Name:        "time",
-				Description: "残り時間（4桁 hhmm）",
+				Description: "残り時間（HHmm形式 3時間14分なら0314）",
 				Type:        discordgo.ApplicationCommandOptionInteger,
 				MinValue:    Ptr(0.0),
 				MaxValue:    2359.0,
@@ -261,8 +261,9 @@ func handleCmdRouteAddAutocomplete(s *discordgo.Session, i *discordgo.Interactio
 func handleCmdRouteAddCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdRouteAdd).Str(lkIID, i.ID).Logger()
 	if i.Member == nil {
-		// This command is only available in guilds.
-		// TODO: print ephemeral error message
+		if mErr := respondWithEphemeralMessage(s, i, "エラー: この機能はDMではなくサーバーで使ってほしいわん"); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
 		return
 	}
 
@@ -281,7 +282,9 @@ func handleCmdRouteAddCommand(s *discordgo.Session, i *discordgo.InteractionCrea
 	navname, err := navigationName(s, i)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not get navigation name")
-		// TODO: print ephemeral error message
+		if mErr := respondWithEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかチャンネルの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
 		return
 	}
 	if _, ok := navigations[navname]; !ok {
@@ -309,22 +312,30 @@ func handleCmdRouteAddCommand(s *discordgo.Session, i *discordgo.InteractionCrea
 	// Validate arguments.
 	if from == to {
 		lg.Error().Err(fmt.Errorf("from and to are the same")).Msg("invalid arguments")
-		// TODO: print ephemeral error message
+		if mErr := respondWithEphemeralMessage(s, i, "エラー: `from` と `to` は異なるマップにしてほしいわん"); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
 		return
 	}
 	if _, ok := data.Maps[from]; !ok {
 		lg.Error().Err(fmt.Errorf("invalid from")).Msg("invalid arguments")
-		// TODO: print ephemeral error message
+		if mErr := respondWithEphemeralMessage(s, i, "エラー: `from` に知らないマップ名が入ってるわん"); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
 		return
 	}
 	if _, ok := data.Maps[to]; !ok {
 		lg.Error().Err(fmt.Errorf("invalid to")).Msg("invalid arguments")
-		// TODO: print ephemeral error message
+		if mErr := respondWithEphemeralMessage(s, i, "エラー: `to` に知らないマップ名が入ってるわん"); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
 		return
 	}
 	if timeHour < 0 || timeHour > 23 || timeMinute < 0 || timeMinute > 59 {
 		lg.Error().Err(fmt.Errorf("invalid time")).Msg("invalid arguments")
-		// TODO: print ephemeral error message
+		if mErr := respondWithEphemeralMessage(s, i, "エラー: `time` は `HHmm` のフォーマットで入力してほしいわん（3時間14分なら `0314` ）"); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
 		return
 	}
 
@@ -338,22 +349,29 @@ func handleCmdRouteAddCommand(s *discordgo.Session, i *discordgo.InteractionCrea
 	)
 	nav.AddPortal(portal)
 
-	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	if mErr := respondWithEphemeralMessage(s, i,
+		fmt.Sprintf("追加したわん！いまこんな感じ！ `/route-print` で画像を投稿するわん！\n%s", roanav.BriefNavigation(nav, data.Maps)),
+	); mErr != nil {
+		lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+	}
+}
+
+func respondWithEphemeralMessage(s *discordgo.Session, i *discordgo.InteractionCreate, msg string) error {
+	return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("いまこんな感じ！ `/route-print` で画像を投稿するわん！\n%s", roanav.BriefNavigation(nav, data.Maps)),
+			Content: msg,
 			Flags:   discordgo.MessageFlagsEphemeral | discordgo.MessageFlagsSuppressEmbeds | discordgo.MessageFlagsSuppressNotifications,
 		},
-	}); err != nil {
-		lg.Error().Err(err).Msg("could not send InteractionResponse")
-	}
+	})
 }
 
 func handleCmdRoutePrint(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdRoutePrint).Str(lkIID, i.ID).Logger()
 	if i.Member == nil {
-		// This command is only available in guilds.
-		// TODO: print ephemeral error message
+		if mErr := respondWithEphemeralMessage(s, i, "エラー: この機能はDMではなくサーバーで使ってほしいわん"); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
 		return
 	}
 
@@ -361,7 +379,9 @@ func handleCmdRoutePrint(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	navname, err := navigationName(s, i)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not get navigation name")
-		// TODO: print ephemeral error message
+		if mErr := respondWithEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかチャンネルの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
 		return
 	}
 	if _, ok := navigations[navname]; !ok {
@@ -374,7 +394,9 @@ func handleCmdRoutePrint(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	nav.DeleteExpiredPortals()
 	if nav.Portals == nil || len(nav.Portals) == 0 {
 		lg.Error().Err(fmt.Errorf("no portals")).Msg("len(nav.Portals) == 0")
-		// TODO: print ephemeral error message
+		if mErr := respondWithEphemeralMessage(s, i, "エラー: 有効なルートが1個もないわん。 `/route-add` で追加してからまた試してほしいわん。"); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
 		return
 	}
 
@@ -383,7 +405,9 @@ func handleCmdRoutePrint(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	dist, err := p.Paint(nav)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not generate PlantUML")
-		// TODO: print ephemeral error message
+		if mErr := respondWithEphemeralMessage(s, i, fmt.Sprintf("エラー: 画像の生成に失敗したわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
 		return
 	}
 
@@ -395,7 +419,7 @@ func handleCmdRoutePrint(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s お待たせだわん", i.Member.User.Mention()),
+			Content: fmt.Sprintf("%s お待たせしましたわん！", i.Member.User.Mention()),
 			Flags:   discordgo.MessageFlagsSuppressNotifications,
 			Files: []*discordgo.File{
 				{

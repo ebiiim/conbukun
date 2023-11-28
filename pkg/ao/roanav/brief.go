@@ -8,8 +8,6 @@ import (
 	"github.com/ebiiim/conbukun/pkg/ao/data"
 )
 
-// TODO: add brief interface?
-
 func BriefPortal(p *Portal, mapData map[string]data.MapData) string {
 
 	var sb strings.Builder
@@ -33,6 +31,7 @@ func BriefPortal(p *Portal, mapData map[string]data.MapData) string {
 		typ = "Y"
 	}
 
+	// NOTE: less than 1 minute is not shown (wontfix as this is a trivial issue)
 	sb.WriteString(fmt.Sprintf("%s <-[%s|%s]-> %s", from, typ, strings.TrimSuffix(time.Until(p.ExpiredAt).Truncate(time.Minute).String(), "0s"), to))
 
 	u, ok := p.Data[PortalDataKeyUser]
