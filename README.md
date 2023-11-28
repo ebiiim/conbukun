@@ -8,6 +8,8 @@
 ](https://discord.com/oauth2/authorize?client_id=1151570933543342101&scope=bot&permissions=60416)
 [![Release (GitHub)](https://img.shields.io/github/v/release/ebiiim/conbukun)](https://github.com/ebiiim/conbukun/releases/latest)
 
+<a href="https://www.buymeacoffee.com/ebiiim" target="_blank"><img src="https://raw.githubusercontent.com/ebiiim/conbukun/main/assets/doc/buymeacoffee.png" alt="Buy Me A Coffee" width="" height="30" /></a>
+
 Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用のDiscord Botです。
 
 
