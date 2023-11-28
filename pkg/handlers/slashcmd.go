@@ -419,7 +419,7 @@ func handleCmdRoutePrint(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s お待たせしましたわん！", i.Member.User.Mention()),
+			Content: "お待たせしましたわん！",
 			Flags:   discordgo.MessageFlagsSuppressNotifications,
 			Files: []*discordgo.File{
 				{
