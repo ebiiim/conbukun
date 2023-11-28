@@ -8,7 +8,7 @@ import (
 	"github.com/ebiiim/conbukun/pkg/ao/data"
 )
 
-// TODO: add brief interface
+// TODO: add brief interface?
 
 func BriefPortal(p *Portal, mapData map[string]data.MapData) string {
 
@@ -25,11 +25,19 @@ func BriefPortal(p *Portal, mapData map[string]data.MapData) string {
 		to = mdTo.DisplayName
 	}
 
-	sb.WriteString(fmt.Sprintf("%s <--[ %s @%s ]--> %s", from, p.Type, strings.TrimSuffix(time.Until(p.ExpiredAt).Truncate(time.Minute).String(), "0s"), to))
+	typ := "E"
+	switch p.Type {
+	case PortalTypeBlue:
+		typ = "B"
+	case PortalTypeYellow:
+		typ = "Y"
+	}
+
+	sb.WriteString(fmt.Sprintf("%s <-[%s|%s]-> %s", from, typ, strings.TrimSuffix(time.Until(p.ExpiredAt).Truncate(time.Minute).String(), "0s"), to))
 
 	u, ok := p.Data[PortalDataKeyUser]
 	if ok {
-		sb.WriteString(fmt.Sprintf(" (by %s)", u))
+		sb.WriteString(fmt.Sprintf("  (%s)", u))
 	}
 
 	return sb.String()
@@ -40,11 +48,12 @@ func BriefNavigation(n *Navigation, mapData map[string]data.MapData) string {
 
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("Name: %s\n", n.Name))
-	sb.WriteString(fmt.Sprintf("Timestamp: %s\n", time.Now().Format("2006-01-02 15:04:05 MST")))
-	sb.WriteString("Portals:\n")
+	// sb.WriteString(fmt.Sprintf("Name: %s\n", n.Name))
+	// sb.WriteString(fmt.Sprintf("Timestamp: %s\n", time.Now().Format("2006-01-02 15:04:05 MST")))
+	// sb.WriteString("Portals:\n")
 	for _, p := range n.Portals {
-		sb.WriteString(fmt.Sprintf("  %s\n", BriefPortal(p, mapData)))
+		// sb.WriteString(fmt.Sprintf("  %s\n", BriefPortal(p, mapData)))
+		sb.WriteString(fmt.Sprintf("- %s\n", BriefPortal(p, mapData)))
 	}
 	return sb.String()
 }

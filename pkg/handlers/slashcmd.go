@@ -45,22 +45,22 @@ var (
 		Description: "アバロンのルートを追加する",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
-				Name:        "from",
-				Description: "出発地",
-				Type:        discordgo.ApplicationCommandOptionString,
-				Choices:     nil, // initialized in init()
-				Required:    true,
+				Name:         "from",
+				Description:  "出発地（何文字か入力して！）",
+				Type:         discordgo.ApplicationCommandOptionString,
+				Autocomplete: true,
+				Required:     true,
 			},
 			{
-				Name:        "to",
-				Description: "目的地",
-				Type:        discordgo.ApplicationCommandOptionString,
-				Choices:     nil, // initialized in init()
-				Required:    true,
+				Name:         "to",
+				Description:  "目的地（何文字か入力して！）",
+				Type:         discordgo.ApplicationCommandOptionString,
+				Autocomplete: true,
+				Required:     true,
 			},
 			{
 				Name:        "color",
-				Description: "ポータルの色",
+				Description: "ポータルの色（青or黄 入れる人数が決まる）",
 				Type:        discordgo.ApplicationCommandOptionString,
 				Choices: []*discordgo.ApplicationCommandOptionChoice{
 					{
@@ -105,33 +105,6 @@ var (
 	}
 )
 
-func init() {
-	AppCmdRouteAdd.Options[0].Choices = choicesFromMaps(data.Maps)[0:20] // FIXME: CRITICAL: must be 25 or less but we need more
-	AppCmdRouteAdd.Options[1].Choices = choicesFromMaps(data.Maps)[0:20] // FIXME: CRITICAL: must be 25 or less but we need more
-}
-
-func choicesFromMaps(maps map[string]data.MapData) []*discordgo.ApplicationCommandOptionChoice {
-	var choices []*discordgo.ApplicationCommandOptionChoice
-
-	for _, md := range maps {
-		choiceName := ""
-		choiceValue := md.ID
-
-		switch data.GetMapType(md) {
-		case data.MapTypeBlackZone, data.MapTypeRedZone, data.MapTypeYellowZone, data.MapTypeBlueZone, data.MapTypeCity:
-			choiceName = md.DisplayName
-		case data.MapTypeAvalon:
-			choiceName = fmt.Sprintf("[%s] %s", data.GetMapShortName(md), md.DisplayName)
-		default:
-			continue
-		}
-
-		choices = append(choices, &discordgo.ApplicationCommandOptionChoice{Name: choiceName, Value: choiceValue})
-	}
-
-	return choices
-}
-
 func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdHelp).Str(lkIID, i.ID).Logger()
 
@@ -156,6 +129,8 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		"## コマンド\n" +
 		"- `/help` このメッセージを表示します。\n" +
 		"- `/mule` ラバに関するヒントをランダムに投稿します（30秒後に自動削除）。\n" +
+		"- `/route-add` アバロンのルートを追加します。\n" +
+		"- `/route-print` アバロンのルートを表示します。\n" +
 		"## リアクション\n" +
 		"- **リアクション集計** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionRequired) + "）を行うとリマインダーを投稿します（2分後に自動削除）。\n" +
 		// "- [試験運用中] **リアクション集計（表）** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionStats) + "）を行うと表形式で投稿します（2分後に削除）。\n" +
@@ -228,11 +203,13 @@ func handleCmdMule(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 var (
 	// TODO: make this private, persistent and thread-safe
-	navigations = map[string]*roanav.Navigation{}
+	navigations                        = map[string]*roanav.Navigation{}
+	mapNameCompleter *MapNameCompleter = nil
 )
 
 func init() {
 	navigations = map[string]*roanav.Navigation{}
+	mapNameCompleter = NewMapNameCompleter(5)
 }
 
 func navigationName(s *discordgo.Session, i *discordgo.InteractionCreate) (string, error) {
@@ -248,6 +225,40 @@ func navigationName(s *discordgo.Session, i *discordgo.InteractionCreate) (strin
 }
 
 func handleCmdRouteAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	lg := lg.With().Str(lkCmd, CmdRouteAdd+"/dispatcher").Str(lkIID, i.ID).Logger()
+	switch i.Type {
+	case discordgo.InteractionApplicationCommandAutocomplete:
+		handleCmdRouteAddAutocomplete(s, i)
+	case discordgo.InteractionApplicationCommand:
+		handleCmdRouteAddCommand(s, i)
+	default:
+		lg.Error().Msgf("unknown InteractionType: %s", i.Type.String())
+	}
+}
+
+func handleCmdRouteAddAutocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	lg := lg.With().Str(lkCmd, CmdRouteAdd+"/autocomplete").Str(lkIID, i.ID).Logger()
+
+	data := i.ApplicationCommandData()
+	var choices []*discordgo.ApplicationCommandOptionChoice
+	switch {
+	case data.Options[0].Focused: // from
+		choices = mapNameCompleter.GetChoices(data.Options[0].StringValue())
+	case data.Options[1].Focused: // to
+		choices = mapNameCompleter.GetChoices(data.Options[1].StringValue())
+	}
+
+	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+		Data: &discordgo.InteractionResponseData{
+			Choices: choices,
+		},
+	}); err != nil {
+		lg.Error().Err(err).Msg("could not send InteractionResponse")
+	}
+}
+
+func handleCmdRouteAddCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdRouteAdd).Str(lkIID, i.ID).Logger()
 	if i.Member == nil {
 		// This command is only available in guilds.
@@ -301,6 +312,16 @@ func handleCmdRouteAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		// TODO: print ephemeral error message
 		return
 	}
+	if _, ok := data.Maps[from]; !ok {
+		lg.Error().Err(fmt.Errorf("invalid from")).Msg("invalid arguments")
+		// TODO: print ephemeral error message
+		return
+	}
+	if _, ok := data.Maps[to]; !ok {
+		lg.Error().Err(fmt.Errorf("invalid to")).Msg("invalid arguments")
+		// TODO: print ephemeral error message
+		return
+	}
 	if timeHour < 0 || timeHour > 23 || timeMinute < 0 || timeMinute > 59 {
 		lg.Error().Err(fmt.Errorf("invalid time")).Msg("invalid arguments")
 		// TODO: print ephemeral error message
@@ -320,7 +341,7 @@ func handleCmdRouteAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("わん！いまこんな感じ！ `/route-print` で画像を投稿するわん！\n```%s```", roanav.BriefNavigation(nav, data.Maps)),
+			Content: fmt.Sprintf("いまこんな感じ！ `/route-print` で画像を投稿するわん！\n%s", roanav.BriefNavigation(nav, data.Maps)),
 			Flags:   discordgo.MessageFlagsEphemeral | discordgo.MessageFlagsSuppressEmbeds | discordgo.MessageFlagsSuppressNotifications,
 		},
 	}); err != nil {

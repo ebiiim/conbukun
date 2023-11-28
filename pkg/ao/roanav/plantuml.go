@@ -127,8 +127,10 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 		templateData.Links = append(templateData.Links, templateDataLink{
 			FromAlias: aliasFrom,
 			ToAlias:   aliasTo,
-			Duration:  strings.TrimSuffix(portal.ExpiredAt.Sub(t).Truncate(time.Minute).String(), "0s"), // 2h30m0s -> 2h30m
-			Color:     color,
+			// 2h30m0s -> 2h30m
+			// NOTE: less than 1 minute is not shown (a trivial issue)
+			Duration: strings.TrimSuffix(portal.ExpiredAt.Sub(t).Truncate(time.Minute).String(), "0s"),
+			Color:    color,
 		})
 	}
 
