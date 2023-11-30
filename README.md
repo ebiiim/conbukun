@@ -53,6 +53,9 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
   - 機能: 会話（？）
   - 内部: マルチインスタンス対応（{リアクション|メンション}ハンドラのGuild ID対応）
   - 改善: `ルートナビ` エラーメッセージをembedでキレイに出力する
+  - 内部: `bot.Config` をちゃんと使う（ `Version` とか）
+- 既知の問題
+  - 修正: Kubernetesマニフェストを変更するとセーブデータが消える場合がある？（条件不明、Podをdeleteしても消えない）
 - 2023-12-01 v1.4.1
   - 改善: タイムゾーンをJSTに変更（Kubernetesマニフェスト）
 - 2023-12-01 v1.4.0
