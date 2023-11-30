@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -439,6 +440,109 @@ func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.I
 	h.DeleteNavigation(navName)
 }
 
+func (h *ROANavHandler) HandleCmdRouteMark(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	lg := lg.With().Str(lkCmd, CmdRouteMark+"/dispatcher").Str(lkIID, i.ID).Logger()
+	switch i.Type {
+	case discordgo.InteractionApplicationCommandAutocomplete:
+		h.HandleCmdRouteMarkAutocomplete(s, i)
+	case discordgo.InteractionApplicationCommand:
+		h.HandleCmdRouteMarkCommand(s, i)
+	default:
+		lg.Error().Msgf("unknown InteractionType: %s", i.Type.String())
+	}
+}
+
+func (h *ROANavHandler) HandleCmdRouteMarkAutocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	lg := lg.With().Str(lkCmd, CmdRouteMark+"/autocomplete").Str(lkIID, i.ID).Logger()
+
+	data := i.ApplicationCommandData()
+	var choices []*discordgo.ApplicationCommandOptionChoice
+	switch {
+	case data.Options[0].Focused: // map
+		choices = h.MapNameCompleter.GetChoices(data.Options[0].StringValue())
+	}
+
+	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+		Data: &discordgo.InteractionResponseData{
+			Choices: choices,
+		},
+	}); err != nil {
+		lg.Error().Err(err).Msg("could not send InteractionResponse")
+	}
+}
+
+func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	lg := lg.With().Str(lkCmd, CmdRouteMark).Str(lkIID, i.ID).Logger()
+
+	// Get names.
+	navName, _, err := getNavNameAndUserName(s, i)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not get navigation name or user name")
+		if mErr := respondEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかユーザーの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
+		return
+	}
+
+	// Get the Navigation.
+	nav := h.GetOrCreateNavigation(navName)
+	nav.DeleteExpiredPortals()
+
+	// Get arguments.
+	optMap := i.ApplicationCommandData().Options[0]
+	targetMap := optMap.StringValue()
+	lg.Info().Str("targetMap", targetMap).Msg("arguments")
+
+	// Validate arguments.
+	// nothing to validate
+
+	// Init marked maps if not exists.
+	if _, ok := nav.Data[roanav.NavigationDataHideouts]; !ok {
+		nav.Data[roanav.NavigationDataHideouts] = ""
+	}
+
+	// Get current marked maps.
+	markedMaps := strings.Split(nav.Data[roanav.NavigationDataHideouts], ",")
+
+	// Toggle.
+	var newMarkedMaps []string
+	for _, m := range markedMaps {
+		if m == targetMap {
+			continue
+		}
+		newMarkedMaps = append(newMarkedMaps, m)
+	}
+	if len(newMarkedMaps) == len(markedMaps) {
+		newMarkedMaps = append(newMarkedMaps, targetMap)
+	}
+
+	// Set.
+	nav.Data[roanav.NavigationDataHideouts] = strings.Join(newMarkedMaps, ",")
+
+	// Save.
+	if err := h.Save(); err != nil {
+		lg.Error().Err(err).Msg("could not save navigations")
+	}
+
+	// String representation.
+	markedMapsStr := ""
+	for _, m := range newMarkedMaps {
+		md, ok := data.Maps[m]
+		if !ok {
+			continue
+		}
+		markedMapsStr += fmt.Sprintf("- %s\n", md.DisplayName)
+	}
+	markedMapsStr = strings.TrimSuffix(markedMapsStr, "\n")
+
+	if mErr := respondEphemeralMessage(s, i,
+		fmt.Sprintf("対象をマークまたはアンマークしたわん！現在マークされているマップはこんな感じわん！\n%s", markedMapsStr),
+	); mErr != nil {
+		lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+	}
+}
+
 func (*ROANavHandler) CommandRouteAdd() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        CmdRouteAdd,
@@ -497,5 +601,21 @@ func (*ROANavHandler) CommandRouteClear() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        CmdRouteClear,
 		Description: "こんぶくんに覚えているアバロンのルートを全部忘れてもらう",
+	}
+}
+
+func (*ROANavHandler) CommandRouteMark() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        CmdRouteMark,
+		Description: "こんぶくんに特別なマップに色をつけてもらう（再実行で解除）",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:         "map",
+				Description:  "マップ名（何文字か入力して！）",
+				Type:         discordgo.ApplicationCommandOptionString,
+				Autocomplete: true,
+				Required:     true,
+			},
+		},
 	}
 }

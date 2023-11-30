@@ -47,6 +47,7 @@ func New(cfg Config) (*Bot, error) {
 		roaNavHandler.CommandRouteAdd(),
 		roaNavHandler.CommandRoutePrint(),
 		roaNavHandler.CommandRouteClear(),
+		roaNavHandler.CommandRouteMark(),
 	}
 
 	cmdHandlers := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
@@ -55,6 +56,7 @@ func New(cfg Config) (*Bot, error) {
 		handlers.CmdRouteAdd:   roaNavHandler.HandleCmdRouteAdd,
 		handlers.CmdRoutePrint: roaNavHandler.HandleCmdRoutePrint,
 		handlers.CmdRouteClear: roaNavHandler.HandleCmdRouteClear,
+		handlers.CmdRouteMark:  roaNavHandler.HandleCmdRouteMark,
 	}
 
 	reactionAddHandlers := map[string]func(s *discordgo.Session, r *discordgo.MessageReactionAdd){}
