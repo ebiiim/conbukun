@@ -111,12 +111,12 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 		aliasFrom := toAlias(portal.From)
 		aliasTo := toAlias(portal.To)
 
-		agentFrom, err := p.toTemplateDataAgent(portal.From)
+		agentFrom, err := p.toTemplateDataAgent(portal.From, n.Data)
 		if err != nil {
 			errs = errors.Join(errs, fmt.Errorf("p.toTemplateDataAgent(portal.From): %w", err))
 			continue
 		}
-		agentTo, err := p.toTemplateDataAgent(portal.To)
+		agentTo, err := p.toTemplateDataAgent(portal.To, n.Data)
 		if err != nil {
 			errs = errors.Join(errs, fmt.Errorf("p.toTemplateDataAgent(portal.To): %w", err))
 			continue
@@ -128,9 +128,9 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 		color := "red" // error
 		switch portal.Type {
 		case PortalTypeBlue:
-			color = "blue"
+			color = "darkblue"
 		case PortalTypeYellow:
-			color = "gold"
+			color = "orange"
 		}
 
 		ts := strings.TrimSuffix(portal.ExpiredAt.Sub(t).Truncate(time.Minute).String(), "0s")
@@ -154,7 +154,7 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 	return templateData, errs
 }
 
-func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string) (templateDataAgent, error) {
+func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string, navigationData map[string]string) (templateDataAgent, error) {
 	d := templateDataAgent{}
 
 	md, ok := p.MapData[portalID]
@@ -168,7 +168,8 @@ func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string) (template
 		mapName = fmt.Sprintf("[%s] %s", shortName, mapName) // "[SO] Suyos-Onaytum"
 	}
 
-	d.Name = fmt.Sprintf("%s\\n%s %s", mapName, data.GetMapType(md), data.GetMapTier(md))
+	// d.Name = fmt.Sprintf("%s\\n%s %s", mapName, data.GetMapType(md), data.GetMapTier(md))
+	d.Name = fmt.Sprintf("%s (%s)", mapName, data.GetMapTier(md))
 	d.Alias = toAlias(portalID)
 
 	color := ""
@@ -180,7 +181,17 @@ func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string) (template
 	case data.MapTypeYellowZone:
 		color = "#gold"
 	case data.MapTypeCity, data.MapTypeBlueZone:
-		color = "#aqua"
+		color = "#lightskyblue"
+	}
+
+	// check hideout
+	if v, ok := navigationData[NavigationDataHideouts]; ok {
+		for _, hideout := range strings.Split(v, ",") {
+			if hideout == portalID {
+				color = "#green;text:white"
+				break
+			}
+		}
 	}
 
 	d.Color = color
@@ -194,6 +205,8 @@ func init() {
 	tmpl = template.Must(template.New("plantuml").Parse(`
 @startuml
 
+skinparam handwritten true
+skinparam backgroundColor #F8F5EB
 caption "Contributors: {{ .Contributors }}\nTimestamp: {{ .GeneratedAt }}\nAffiliation: {{ .Credit }}"
 {{ range $val := .Agents }}
 agent "{{ $val.Name }}" as {{ $val.Alias }} {{ $val.Color }}

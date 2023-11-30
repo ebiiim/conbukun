@@ -20,7 +20,7 @@ func main() {
 
 	p := roanav.NewKrokiPlantUMLPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps)
 
-	mdSQV := mustGetMD("Qiitun-Si-Vynsom")
+	mdQSV := mustGetMD("Qiitun-Si-Vynsom")
 	mdQQV := mustGetMD("Qiient-Qi-Vynsis")
 	mdQV := mustGetMD("Qiitun-Vietis")
 	mdCA := mustGetMD("Ceritos-Avulsum")
@@ -34,14 +34,17 @@ func main() {
 	n := &roanav.Navigation{
 		Name: "MyGuild#ROA (conbukun@v1.3.0)",
 		Portals: []*roanav.Portal{
-			roanav.NewPortal(mdSQV.ID, mdQQV.ID, roanav.PortalTypeBlue, time.Now().Add(3*time.Hour), map[string]string{roanav.PortalDataKeyUser: "user1"}),
-			roanav.NewPortal(mdSQV.ID, mdQV.ID, roanav.PortalTypeYellow, time.Now().Add(9*time.Hour), map[string]string{roanav.PortalDataKeyUser: "user2"}),
+			roanav.NewPortal(mdQSV.ID, mdQQV.ID, roanav.PortalTypeBlue, time.Now().Add(3*time.Hour), map[string]string{roanav.PortalDataKeyUser: "user1"}),
+			roanav.NewPortal(mdQSV.ID, mdQV.ID, roanav.PortalTypeYellow, time.Now().Add(9*time.Hour), map[string]string{roanav.PortalDataKeyUser: "user2"}),
 			roanav.NewPortal(mdQQV.ID, mdQV.ID, roanav.PortalTypeBlue, time.Now().Add(-3*time.Hour), map[string]string{roanav.PortalDataKeyUser: "user3"}),
 			roanav.NewPortal(mdDE.ID, mdQV.ID, roanav.PortalTypeBlue, time.Now().Add(25*time.Minute), map[string]string{roanav.PortalDataKeyUser: "user4"}),
-			roanav.NewPortal(mdDE.ID, mdFF.ID, roanav.PortalTypeYellow, time.Now().Add(3*time.Minute), map[string]string{roanav.PortalDataKeyUser: "user5"}),
+			roanav.NewPortal(mdSO.ID, mdFF.ID, roanav.PortalTypeYellow, time.Now().Add(3*time.Minute), map[string]string{roanav.PortalDataKeyUser: "user5"}),
 			roanav.NewPortal(mdQV.ID, mdCM.ID, roanav.PortalTypeYellow, time.Now().Add(1*time.Minute), map[string]string{roanav.PortalDataKeyUser: "user6"}),
 			roanav.NewPortal(mdQV.ID, mdSB.ID, roanav.PortalTypeYellow, time.Now().Add(500*time.Minute), map[string]string{roanav.PortalDataKeyUser: "user7"}),
 			roanav.NewPortal(mdCA.ID, mdSO.ID, roanav.PortalTypeYellow, time.Now().Add(100*time.Minute), map[string]string{roanav.PortalDataKeyUser: "user1"}),
+		},
+		Data: map[string]string{
+			roanav.NavigationDataHideouts: fmt.Sprintf("%s,", mdQSV.ID),
 		},
 	}
 	n.DeleteExpiredPortals()
