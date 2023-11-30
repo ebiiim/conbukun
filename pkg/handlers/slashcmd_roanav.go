@@ -183,6 +183,13 @@ func (h *ROANavHandler) HandleCmdRouteAddAutocomplete(s *discordgo.Session, i *d
 	}
 }
 
+func getUser(i *discordgo.InteractionCreate) *discordgo.User {
+	if i.Member == nil {
+		return i.User
+	}
+	return i.Member.User
+}
+
 func getNavNameAndUserName(s *discordgo.Session, i *discordgo.InteractionCreate) (navName, userName string, err error) {
 
 	isDM := (i.Member == nil)
@@ -222,7 +229,7 @@ func (h *ROANavHandler) HandleCmdRouteAddCommand(s *discordgo.Session, i *discor
 	navName, userName, err := getNavNameAndUserName(s, i)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not get navigation name or user name")
-		if mErr := respondWithEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかユーザーの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかユーザーの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
@@ -248,28 +255,28 @@ func (h *ROANavHandler) HandleCmdRouteAddCommand(s *discordgo.Session, i *discor
 	// Validate arguments.
 	if from == to {
 		lg.Error().Err(fmt.Errorf("from and to are the same")).Msg("invalid arguments")
-		if mErr := respondWithEphemeralMessage(s, i, "エラー: `from` と `to` は異なるマップにしてほしいわん"); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, "エラー: `from` と `to` は異なるマップにしてほしいわん"); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
 	}
 	if _, ok := data.Maps[from]; !ok {
 		lg.Error().Err(fmt.Errorf("invalid from")).Msg("invalid arguments")
-		if mErr := respondWithEphemeralMessage(s, i, "エラー: `from` に知らないマップ名が入ってるわん"); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, "エラー: `from` に知らないマップ名が入ってるわん"); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
 	}
 	if _, ok := data.Maps[to]; !ok {
 		lg.Error().Err(fmt.Errorf("invalid to")).Msg("invalid arguments")
-		if mErr := respondWithEphemeralMessage(s, i, "エラー: `to` に知らないマップ名が入ってるわん"); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, "エラー: `to` に知らないマップ名が入ってるわん"); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
 	}
 	if timeHour < 0 || timeHour > 23 || timeMinute < 0 || timeMinute > 59 {
 		lg.Error().Err(fmt.Errorf("invalid time")).Msg("invalid arguments")
-		if mErr := respondWithEphemeralMessage(s, i, "エラー: `time` は `HHmm` のフォーマットで入力してほしいわん（3時間14分なら `0314` ）"); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, "エラー: `time` は `HHmm` のフォーマットで入力してほしいわん（3時間14分なら `0314` ）"); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
@@ -289,7 +296,7 @@ func (h *ROANavHandler) HandleCmdRouteAddCommand(s *discordgo.Session, i *discor
 		lg.Error().Err(err).Msg("could not save navigations")
 	}
 
-	if mErr := respondWithEphemeralMessage(s, i,
+	if mErr := respondEphemeralMessage(s, i,
 		fmt.Sprintf("追加したわん！いまこんな感じ！\n%s`/route-print` で画像を投稿できるわん！", roanav.BriefNavigation(nav, data.Maps)),
 	); mErr != nil {
 		lg.Error().Err(mErr).Msg("could not send InteractionResponse")
@@ -303,7 +310,7 @@ func (h *ROANavHandler) HandleCmdRoutePrint(s *discordgo.Session, i *discordgo.I
 	navName, _, err := getNavNameAndUserName(s, i)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not get navigation name or user name")
-		if mErr := respondWithEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかユーザーの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかユーザーの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
@@ -316,10 +323,15 @@ func (h *ROANavHandler) HandleCmdRoutePrint(s *discordgo.Session, i *discordgo.I
 	// Validate.
 	if nav.Portals == nil || len(nav.Portals) == 0 {
 		lg.Error().Err(fmt.Errorf("no portals")).Msg("len(nav.Portals) == 0")
-		if mErr := respondWithEphemeralMessage(s, i, "エラー: 有効なルートが1個もないわん。 `/route-add` で追加してからまた試してほしいわん。"); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, "エラー: 有効なルートが1個もないわん。 `/route-add` で追加してからまた試してほしいわん。"); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
+	}
+
+	// First reaction.
+	if mErr := respondEphemeralMessage(s, i, "処理中だわん"); mErr != nil {
+		lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 	}
 
 	// Generate PlantUML.
@@ -327,7 +339,7 @@ func (h *ROANavHandler) HandleCmdRoutePrint(s *discordgo.Session, i *discordgo.I
 	dist, err := p.Paint(nav)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not generate PlantUML")
-		if mErr := respondWithEphemeralMessage(s, i, fmt.Sprintf("エラー: 画像の生成に失敗したわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+		if mErr := respondEphemeralMessageEdit(s, i, fmt.Sprintf("エラー: 画像の生成に失敗したわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
@@ -338,22 +350,25 @@ func (h *ROANavHandler) HandleCmdRoutePrint(s *discordgo.Session, i *discordgo.I
 	if err != nil {
 		lg.Error().Err(err).Msg("could not open PNG file")
 	}
-	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: "お待たせしましたわん！",
-			Flags:   discordgo.MessageFlagsSuppressNotifications,
-			Files: []*discordgo.File{
-				{
-					Name:        dist, // unsafe chars will be stripped
-					ContentType: "image/png",
-					Reader:      pngFile,
-				},
+	if _, err := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
+		Content: fmt.Sprintf("%s お待たせしましたわん！", getUser(i).Mention()),
+		Flags:   discordgo.MessageFlagsSuppressNotifications,
+		Files: []*discordgo.File{
+			{
+				Name:        dist, // unsafe chars will be stripped
+				ContentType: "image/png",
+				Reader:      pngFile,
 			},
 		},
 	}); err != nil {
-		lg.Error().Err(err).Msg("could not send InteractionResponse")
+		lg.Error().Err(err).Msg("could not send message")
+		if mErr := respondEphemeralMessageEdit(s, i, fmt.Sprintf("エラー: 画像の投稿に失敗したわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
+		return
 	}
+
+	respondEphemeralMessageDelete(s, i)
 }
 
 func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -363,7 +378,7 @@ func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.I
 	navName, _, err := getNavNameAndUserName(s, i)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not get navigation name or user name")
-		if mErr := respondWithEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかユーザーの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかユーザーの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
@@ -375,10 +390,15 @@ func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.I
 
 	// Validate.
 	if nav.Portals == nil || len(nav.Portals) == 0 {
-		if mErr := respondWithEphemeralMessage(s, i, "ルートをクリアしたわん！"); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, "ルートをクリアしたわん！"); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
+	}
+
+	// First reaction.
+	if mErr := respondEphemeralMessage(s, i, "処理中だわん"); mErr != nil {
+		lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 	}
 
 	// Generate PlantUML.
@@ -386,7 +406,7 @@ func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.I
 	dist, err := p.Paint(nav)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not generate PlantUML")
-		if mErr := respondWithEphemeralMessage(s, i, fmt.Sprintf("エラー: 画像の生成に失敗したわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+		if mErr := respondEphemeralMessageEdit(s, i, fmt.Sprintf("エラー: 画像の生成に失敗したわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
@@ -397,21 +417,22 @@ func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.I
 	if err != nil {
 		lg.Error().Err(err).Msg("could not open PNG file")
 	}
-	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: "ルートをクリアしたわん！念のためクリアする前の状態を投稿しておくわん！",
-			Flags:   discordgo.MessageFlagsSuppressNotifications,
-			Files: []*discordgo.File{
-				{
-					Name:        dist, // unsafe chars will be stripped
-					ContentType: "image/png",
-					Reader:      pngFile,
-				},
+	if _, err := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
+		Content: fmt.Sprintf("%s ルートをクリアしたわん！念のため最後の状態を投稿しておくわん！", getUser(i).Mention()),
+		Flags:   discordgo.MessageFlagsSuppressNotifications,
+		Files: []*discordgo.File{
+			{
+				Name:        dist, // unsafe chars will be stripped
+				ContentType: "image/png",
+				Reader:      pngFile,
 			},
 		},
 	}); err != nil {
 		lg.Error().Err(err).Msg("could not send InteractionResponse")
+		if mErr := respondEphemeralMessageEdit(s, i, fmt.Sprintf("エラー: 画像の投稿に失敗したわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
+		return
 	}
 
 	// Clear.

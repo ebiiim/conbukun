@@ -148,7 +148,7 @@ func HandleCmdMule(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 }
 
-func respondWithEphemeralMessage(s *discordgo.Session, i *discordgo.InteractionCreate, msg string) error {
+func respondEphemeralMessage(s *discordgo.Session, i *discordgo.InteractionCreate, msg string) error {
 	return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -156,4 +156,15 @@ func respondWithEphemeralMessage(s *discordgo.Session, i *discordgo.InteractionC
 			Flags:   discordgo.MessageFlagsEphemeral | discordgo.MessageFlagsSuppressEmbeds | discordgo.MessageFlagsSuppressNotifications,
 		},
 	})
+}
+
+func respondEphemeralMessageEdit(s *discordgo.Session, i *discordgo.InteractionCreate, msg string) error {
+	_, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &msg,
+	})
+	return err
+}
+
+func respondEphemeralMessageDelete(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+	return s.InteractionResponseDelete(i.Interaction)
 }
