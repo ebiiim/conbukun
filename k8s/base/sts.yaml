@@ -23,6 +23,8 @@ spec:
             - -v=5
             - -save-dir=/data
           env:
+            - name: TZ
+              value: Asia/Tokyo
             - name: CONBUKUN_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
