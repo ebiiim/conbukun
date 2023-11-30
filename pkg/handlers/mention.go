@@ -7,79 +7,83 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func OnMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	lg := lg.With().
-		Str(lkHandler, "MessageCreate").
-		Str(lkMID, m.ID).
-		Str(lkGuild, m.GuildID).
-		Str(lkCh, m.ChannelID).
-		Str(lkUsr, m.Author.ID).
-		Str(lkName, m.Author.Username).
-		Logger()
+func NewOnMessageCreateHandler() func(s *discordgo.Session, m *discordgo.MessageCreate) {
+	f := func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		lg := lg.With().
+			Str(lkHandler, "MessageCreate").
+			Str(lkMID, m.ID).
+			Str(lkGuild, m.GuildID).
+			Str(lkCh, m.ChannelID).
+			Str(lkUsr, m.Author.ID).
+			Str(lkName, m.Author.Username).
+			Logger()
 
-	// ignore bot messages
-	if m.Author.Bot {
-		return
-	}
+		// ignore bot messages
+		if m.Author.Bot {
+			return
+		}
 
-	// check DM
-	isDM := false
-	if m.GuildID == "" {
-		isDM = true
-	}
+		// check DM
+		isDM := false
+		if m.GuildID == "" {
+			isDM = true
+		}
 
-	// check mention
-	isMention := false
-	for _, u := range m.Mentions {
-		if u.ID == s.State.Application.ID {
-			isMention = true
+		// check mention
+		isMention := false
+		for _, u := range m.Mentions {
+			if u.ID == s.State.Application.ID {
+				isMention = true
+			}
+		}
+
+		// check thread
+		isThread := false
+		ch, err := s.Channel(m.ChannelID)
+		if err != nil {
+			lg.Error().Err(err).Msg("could not get channel")
+		}
+		if ch.IsThread() {
+			isThread = true
+		}
+
+		// check ref
+		hasRef := false
+		if m.MessageReference != nil {
+			hasRef = true
+		}
+		isReply := false
+		if m.MessageReference != nil && m.ReferencedMessage.Author.ID == s.State.Application.ID {
+			isReply = true
+		}
+
+		// check function
+		funcName := ""
+		if detectSayHello(m.Content) {
+			funcName = FuncMessageCreateSayHello
+		}
+		if isReply {
+			funcName = FuncMessageCreateReplyHello
+		}
+
+		lg.Debug().Bool(lkDM, isDM).Msgf("isMention=%v isThread=%v hasRef=%v isReply=%v content=%s", isMention, isThread, hasRef, isReply, m.Content)
+
+		if funcName == "" {
+			return
+		}
+
+		lg.Info().Str(lkFunc, funcName).Bool(lkDM, isDM).Msg("OnMessageCreate")
+		switch funcName {
+		case FuncMessageCreateSayHello:
+			handleMessageCreateSayHello(s, m)
+		case FuncMessageCreateReplyHello:
+			handleMessageCreateReplyHello(s, m)
+		default:
+			return
 		}
 	}
 
-	// check thread
-	isThread := false
-	ch, err := s.Channel(m.ChannelID)
-	if err != nil {
-		lg.Error().Err(err).Msg("could not get channel")
-	}
-	if ch.IsThread() {
-		isThread = true
-	}
-
-	// check ref
-	hasRef := false
-	if m.MessageReference != nil {
-		hasRef = true
-	}
-	isReply := false
-	if m.MessageReference != nil && m.ReferencedMessage.Author.ID == s.State.Application.ID {
-		isReply = true
-	}
-
-	// check function
-	funcName := ""
-	if detectSayHello(m.Content) {
-		funcName = FuncMessageCreateSayHello
-	}
-	if isReply {
-		funcName = FuncMessageCreateReplyHello
-	}
-
-	lg.Debug().Bool(lkDM, isDM).Msgf("isMention=%v isThread=%v hasRef=%v isReply=%v content=%s", isMention, isThread, hasRef, isReply, m.Content)
-
-	if funcName == "" {
-		return
-	}
-
-	lg.Info().Str(lkFunc, funcName).Bool(lkDM, isDM).Msg("OnMessageCreate")
-	switch funcName {
-	case FuncMessageCreateSayHello:
-		handleMessageCreateSayHello(s, m)
-	case FuncMessageCreateReplyHello:
-		handleMessageCreateReplyHello(s, m)
-	default:
-		return
-	}
+	return f
 }
 
 func detectSayHello(s string) bool {

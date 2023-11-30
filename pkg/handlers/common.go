@@ -35,6 +35,7 @@ const (
 	CmdMule       = "mule"
 	CmdRouteAdd   = "route-add"
 	CmdRoutePrint = "route-print"
+	CmdRouteClear = "route-clear"
 	CmdActReqMsg  = "message"
 
 	FuncMessageCreateSayHello       = "message-create/say-hello"
@@ -43,10 +44,13 @@ const (
 	FuncReactionAddReactionRequired = "reaction-add/reaction-required"
 )
 
-func OnReady(s *discordgo.Session, r *discordgo.Ready) {
-	lg = lg.With().Str(lkHandler, "Ready").Logger()
+func InitializeOnReadyHandler() func(s *discordgo.Session, r *discordgo.Ready) {
+	f := func(s *discordgo.Session, r *discordgo.Ready) {
+		lg = lg.With().Str(lkHandler, "Ready").Logger()
 
-	lg.Info().Msgf("logged in as: %s#%s", s.State.User.Username, s.State.User.Discriminator)
+		lg.Info().Msgf("logged in as: %s#%s", s.State.User.Username, s.State.User.Discriminator)
+	}
+	return f
 }
 
 func isASCII(s string) bool {

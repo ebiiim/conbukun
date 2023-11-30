@@ -16,39 +16,34 @@ const (
 )
 
 var (
-	ReactionAddHandlers = map[string]func(s *discordgo.Session, r *discordgo.MessageReactionAdd){}
-
-	emojisReactionAddReactionRequired = []string{"🤖", EmojiConbu01, EmojiTest01}
+	EmojisReactionAddReactionRequired = []string{"🤖", EmojiConbu01, EmojiTest01}
 )
 
-func init() {
-	// register ReactionAddHandlers
+func NewOnMessageReactionAddHandler(
+	reactionAddHandlers map[string]func(s *discordgo.Session, r *discordgo.MessageReactionAdd),
+) func(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	f := func(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+		lg := lg.With().
+			Str(lkHandler, "MessageReactionAdd").
+			Str(lkGuild, r.GuildID).
+			Str(lkCh, r.ChannelID).
+			Str(lkMID, r.MessageID).
+			Str(lkUsr, r.UserID).
+			Str(lkEmoji, r.Emoji.Name).
+			Str(lkEmojiA, r.Emoji.APIName()).
+			Logger()
 
-	for _, emoji := range emojisReactionAddReactionRequired {
-		ReactionAddHandlers[emoji] = handleReactionAddReactionRequired
-	}
-}
-
-func OnMessageReactionAdd(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
-	lg := lg.With().
-		Str(lkHandler, "MessageReactionAdd").
-		Str(lkGuild, r.GuildID).
-		Str(lkCh, r.ChannelID).
-		Str(lkMID, r.MessageID).
-		Str(lkUsr, r.UserID).
-		Str(lkEmoji, r.Emoji.Name).
-		Str(lkEmojiA, r.Emoji.APIName()).
-		Logger()
-
-	lg.Debug().Msgf("OnMessageReactionAdd")
-	if h, ok := ReactionAddHandlers[r.Emoji.Name]; ok {
-		lg.Info().Msgf("OnMessageReactionAdd")
-		h(s, r)
+		lg.Debug().Msgf("OnMessageReactionAdd")
+		if h, ok := reactionAddHandlers[r.Emoji.Name]; ok {
+			lg.Info().Msgf("OnMessageReactionAdd")
+			h(s, r)
+		}
 	}
 
+	return f
 }
 
-func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+func HandleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	if r.GuildID == "" {
 		lg.Debug().Msgf("ReactionAddReactionRequired: return as no GuildID (this message is a DM)")
 		return
@@ -120,7 +115,7 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 	reactedUserIDs := map[string]struct{}{}
 	for _, rt := range parentMsg.Reactions {
 		skip := false
-		for _, excludedEmoji := range emojisReactionAddReactionRequired {
+		for _, excludedEmoji := range EmojisReactionAddReactionRequired {
 			if rt.Emoji.Name == excludedEmoji {
 				skip = true
 			}
@@ -174,7 +169,7 @@ func handleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 
 	// Reset emojis.
 	for _, rt := range parentMsg.Reactions {
-		for _, excludedEmoji := range emojisReactionAddReactionRequired {
+		for _, excludedEmoji := range EmojisReactionAddReactionRequired {
 			if rt.Emoji.Name == excludedEmoji {
 				if err := s.MessageReactionsRemoveEmoji(r.ChannelID, r.MessageID, rt.Emoji.APIName()); err != nil {
 					lg.Error().Err(err).Msg("could not remove emoji from the message: " + rt.Emoji.APIName())

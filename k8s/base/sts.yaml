@@ -1,10 +1,11 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   labels:
     app: conbukun
   name: conbukun
 spec:
+  serviceName: conbukun
   selector:
     matchLabels:
       app: conbukun
@@ -20,6 +21,7 @@ spec:
           command:
             - conbukun
             - -v=5
+            - -save-dir=/data
           env:
             - name: CONBUKUN_AUTH_TOKEN
               valueFrom:
@@ -38,3 +40,14 @@ spec:
             limits:
               cpu: 800m
               memory: 512Mi
+          volumeMounts:
+            - name: conbukun-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: conbukun-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
