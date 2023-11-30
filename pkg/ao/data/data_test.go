@@ -58,3 +58,30 @@ func TestGetMapShortName(t *testing.T) {
 		})
 	}
 }
+
+func TestGetMapType(t *testing.T) {
+	type args struct {
+		mapData MapData
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{name: "bz", args: args{mapData: getMapData("Dryvein End")}, want: MapTypeBlackZone},
+		{name: "rz", args: args{mapData: getMapData("Creag Morr")}, want: MapTypeRedZone},
+		{name: "yz", args: args{mapData: getMapData("Sleetwater Basin")}, want: MapTypeYellowZone},
+		{name: "safe", args: args{mapData: getMapData("Fog Fen")}, want: MapTypeBlueZone},
+		{name: "city", args: args{mapData: getMapData("Bridgewatch")}, want: MapTypeCity},
+		{name: "city", args: args{mapData: getMapData("Caerleon")}, want: MapTypeCity},
+		{name: "city", args: args{mapData: getMapData("Morgana's Rest")}, want: MapTypeCity},
+		{name: "city", args: args{mapData: getMapData("Brecilien")}, want: MapTypeCity},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetMapType(tt.args.mapData); got != tt.want {
+				t.Errorf("GetMapType() = %v, want %v, md=%+v", got, tt.want, tt.args.mapData)
+			}
+		})
+	}
+}

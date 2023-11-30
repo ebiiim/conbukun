@@ -117,6 +117,7 @@ const (
 	MapTypeRawTunnelMedium                         = "TUNNEL_MEDIUM"
 	MapTypeRawTunnelRoyal                          = "TUNNEL_ROYAL"
 	MapTypeRawPlayercityBlack                      = "PLAYERCITY_BLACK"                        // Brecilien, Rests
+	MapTypeRawPlayercityBlackNofurniture           = "PLAYERCITY_BLACK_NOFURNITURE"            // Brecilien*
 	MapTypeRawPlayercityBlackRoyal                 = "PLAYERCITY_BLACK_ROYAL"                  // Caerleon
 	MapTypeRawPlayercityBlackPortalcityNofurniture = "PLAYERCITY_BLACK_PORTALCITY_NOFURNITURE" // Portals
 	MapTypeRawPlayercitySafearea01                 = "PLAYERCITY_SAFEAREA_01"                  // Martlock, Thetford, Bridgewatch
@@ -167,6 +168,7 @@ var (
 	}
 	MapTypesCity = []string{
 		MapTypeRawPlayercityBlack,
+		MapTypeRawPlayercityBlackNofurniture,
 		MapTypeRawPlayercityBlackRoyal,
 		MapTypeRawPlayercityBlackPortalcityNofurniture,
 		MapTypeRawPlayercitySafearea01,
