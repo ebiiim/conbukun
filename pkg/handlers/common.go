@@ -35,6 +35,7 @@ const (
 	CmdMule       = "mule"
 	CmdRouteAdd   = "route-add"
 	CmdRoutePrint = "route-print"
+	CmdRouteClear = "route-clear"
 	CmdActReqMsg  = "message"
 
 	FuncMessageCreateSayHello       = "message-create/say-hello"

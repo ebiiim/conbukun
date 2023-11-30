@@ -16,15 +16,23 @@ import (
 	"github.com/ebiiim/conbukun/pkg/presence"
 )
 
-func run(token string, gid string) error {
-	s, err := discordgo.New("Bot " + token)
+type Config struct {
+	Verbose                       int
+	Token                         string
+	GuildID                       string
+	ROANavHandlerSaveFile         string
+	ROANavHandlerSuggestionsLimit int
+}
+
+func run(cfg Config) error {
+	s, err := discordgo.New("Bot " + cfg.Token)
 	if err != nil {
 		return err
 	}
 	lg.Info().Msgf("bot created")
 
-	if gid != "" {
-		lg.Info().Str("guild", gid).Msgf("guild id specified")
+	if cfg.GuildID != "" {
+		lg.Info().Str("guild_id", cfg.GuildID).Msgf("guild id specified")
 	}
 
 	lg.Info().Msgf("adding handlers...")
@@ -45,7 +53,7 @@ func run(token string, gid string) error {
 
 	lg.Info().Msg("creating commands...")
 	for _, v := range handlers.Commands {
-		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, gid, v)
+		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, cfg.GuildID, v)
 		if err != nil {
 			lg.Error().Err(err).Msgf("could not create command: %s", v.Name)
 		}
@@ -68,13 +76,13 @@ func run(token string, gid string) error {
 	lg.Info().Msg("SIGINT received")
 
 	lg.Info().Msg("removing commands...")
-	registeredCommands, err := s.ApplicationCommands(s.State.User.ID, gid)
+	registeredCommands, err := s.ApplicationCommands(s.State.User.ID, cfg.GuildID)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not fetch registered commands")
 	} else {
 		for _, cmd := range registeredCommands {
 			lg.Debug().Msgf("removing command: %s(%s)", cmd.ID, cmd.Name)
-			if err := s.ApplicationCommandDelete(s.State.User.ID, gid, cmd.ID); err != nil {
+			if err := s.ApplicationCommandDelete(s.State.User.ID, cfg.GuildID, cmd.ID); err != nil {
 				lg.Error().Err(err).Msgf("could not delete command: %s", cmd.Name)
 			}
 		}
@@ -90,8 +98,15 @@ func run(token string, gid string) error {
 
 var version = "dev"
 
+// some variables shoud be initialized in init()
 func init() {
 	handlers.Version = version
+
+	// NOTE: this is a workaroud; currenltly ROANavHandler is initalized in init()
+	roanavSaveFile := os.Getenv("CONBUKUN_ROANAV_SAVEFILE")
+	if roanavSaveFile == "" {
+		handlers.ROANavHandlerSaveFile = roanavSaveFile
+	}
 }
 
 var lg zerolog.Logger = log.With().Str("component", "Conbukun Bot").Logger()
@@ -121,7 +136,15 @@ func main() {
 		gid = envGID
 	}
 
-	switch logLevel {
+	cfg := Config{
+		Verbose:                       logLevel,
+		Token:                         token,
+		GuildID:                       gid,
+		ROANavHandlerSaveFile:         "NOT_USED",
+		ROANavHandlerSuggestionsLimit: 5, // not used
+	}
+
+	switch cfg.Verbose {
 	default:
 		zerolog.SetGlobalLevel(zerolog.FatalLevel)
 	case 1:
@@ -137,7 +160,7 @@ func main() {
 	}
 
 	lg.Info().Msgf("conbukun version=%v", version)
-	if err := run(token, gid); err != nil {
+	if err := run(cfg); err != nil {
 		lg.Fatal().Err(err).Msg("stopped")
 	}
 }
