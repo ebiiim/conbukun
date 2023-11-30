@@ -69,7 +69,7 @@ func (h *ROANavHandler) Save() error {
 	}
 
 	// open save file
-	f, err := os.Open(h.saveFile)
+	f, err := os.OpenFile(h.saveFile, os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
