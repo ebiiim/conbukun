@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	ROANavHandlerSuggestionsLimit = 5
+	DefaultROANavHandlerSuggestionsLimit = 5
 )
 
 type ROANavHandler struct {
@@ -25,17 +25,17 @@ type ROANavHandler struct {
 	saveFile string
 }
 
-func NewROANavHandler(saveFile string) (*ROANavHandler, error) {
+func NewROANavHandler(saveFile string, suggestionsLimit int) (*ROANavHandler, error) {
 	lg := lg.With().Str("func", "NewROANavHandler").Logger()
 
 	lg.Info().
 		Str("saveFile", saveFile).
-		Int("ROANavHandlerSuggestionsLimit", ROANavHandlerSuggestionsLimit).
+		Int("suggestionsLimit", suggestionsLimit).
 		Msg("initializing ROANavHandler")
 
 	rn := &ROANavHandler{
 		navigations:      sync.Map{},
-		MapNameCompleter: NewMapNameCompleter(ROANavHandlerSuggestionsLimit),
+		MapNameCompleter: NewMapNameCompleter(suggestionsLimit),
 		saveFile:         saveFile,
 	}
 

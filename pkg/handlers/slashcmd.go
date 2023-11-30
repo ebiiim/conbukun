@@ -7,35 +7,36 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var (
-	ROANavHandlerSaveFile = "roanav.json"
+func NewOnInteractionCreateHandler(
+	commandHandlers map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate),
+) func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	f := func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		lg := lg.With().Str(lkHandler, "InteractionCreate").Str(lkIID, i.ID).Logger()
 
-	roaNavHandler *ROANavHandler
-)
+		isDM := i.User != nil
+		var usr *discordgo.User
+		if isDM {
+			usr = i.User
+		} else {
+			usr = i.Member.User
+		}
 
-func init() {
-	rnh, err := NewROANavHandler(ROANavHandlerSaveFile)
-	if err != nil {
-		panic(err)
+		cmd := i.ApplicationCommandData().Name
+		lg.Info().Str(lkGuild, i.GuildID).Str(lkCh, i.ChannelID).Str(lkCmd, cmd).Bool(lkDM, isDM).Str(lkUsr, usr.ID).Str(lkName, usr.Username).Msg("OnInteractionCreate")
+		if h, ok := commandHandlers[cmd]; ok {
+			h(s, i)
+		}
 	}
-	roaNavHandler = rnh
+
+	return f
 }
 
-func OnInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	lg := lg.With().Str(lkHandler, "InteractionCreate").Str(lkIID, i.ID).Logger()
+func InitializeApplicationCommands(cmds ...*discordgo.ApplicationCommand) []*discordgo.ApplicationCommand {
+	return cmds
+}
 
-	isDM := i.User != nil
-	var usr *discordgo.User
-	if isDM {
-		usr = i.User
-	} else {
-		usr = i.Member.User
-	}
-	cmd := i.ApplicationCommandData().Name
-	lg.Info().Str(lkGuild, i.GuildID).Str(lkCh, i.ChannelID).Str(lkCmd, cmd).Bool(lkDM, isDM).Str(lkUsr, usr.ID).Str(lkName, usr.Username).Msg("OnInteractionCreate")
-	if h, ok := CommandHandlers[cmd]; ok {
-		h(s, i)
-	}
+func InitializeCommandHandlers(handlers map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate)) map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	return handlers
 }
 
 var (
@@ -48,25 +49,9 @@ var (
 		Name:        CmdMule,
 		Description: "こんぶくんがラバ教の経典から引用してくれる（30秒後に自動削除）",
 	}
-
-	Commands = []*discordgo.ApplicationCommand{
-		AppCmdHelp,
-		AppCmdMule,
-		roaNavHandler.CommandRouteAdd(),
-		roaNavHandler.CommandRoutePrint(),
-		roaNavHandler.CommandRouteClear(),
-	}
-
-	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		CmdHelp:       handleCmdHelp,
-		CmdMule:       handleCmdMule,
-		CmdRouteAdd:   roaNavHandler.HandleCmdRouteAdd,
-		CmdRoutePrint: roaNavHandler.HandleCmdRoutePrint,
-		CmdRouteClear: roaNavHandler.HandleCmdRouteClear,
-	}
 )
 
-func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func HandleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdHelp).Str(lkIID, i.ID).Logger()
 
 	guildEmojis, err := s.GuildEmojis(i.GuildID)
@@ -94,7 +79,7 @@ func handleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		"- `/route-print` アバロンのルートを画像で投稿します。\n" +
 		"- `/route-clear` アバロンのルートをリセットします。\n" +
 		"## リアクション\n" +
-		"- **リアクション集計** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionRequired) + "）を行うとリマインダーを投稿します（2分後に自動削除）。\n" +
+		"- **リアクション集計** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, EmojisReactionAddReactionRequired) + "）を行うとリマインダーを投稿します（2分後に自動削除）。\n" +
 		// "- [試験運用中] **リアクション集計（表）** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionStats) + "）を行うと表形式で投稿します（2分後に削除）。\n" +
 		"## おまけ\n" +
 		"- 呼びかけに反応したりお昼寝したりします。\n" +
@@ -144,7 +129,7 @@ var (
 	}
 )
 
-func handleCmdMule(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func HandleCmdMule(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdMule).Str(lkIID, i.ID).Logger()
 
 	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{

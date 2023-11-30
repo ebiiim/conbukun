@@ -1,112 +1,22 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
+	"path/filepath"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/ebiiim/conbukun/pkg/bot"
 	"github.com/ebiiim/conbukun/pkg/handlers"
-	"github.com/ebiiim/conbukun/pkg/presence"
 )
-
-type Config struct {
-	Verbose                       int
-	Token                         string
-	GuildID                       string
-	ROANavHandlerSaveFile         string
-	ROANavHandlerSuggestionsLimit int
-}
-
-func run(cfg Config) error {
-	s, err := discordgo.New("Bot " + cfg.Token)
-	if err != nil {
-		return err
-	}
-	lg.Info().Msgf("bot created")
-
-	if cfg.GuildID != "" {
-		lg.Info().Str("guild_id", cfg.GuildID).Msgf("guild id specified")
-	}
-
-	lg.Info().Msgf("adding handlers...")
-	s.AddHandler(handlers.OnReady)
-	s.AddHandler(handlers.OnMessageCreate)
-	s.AddHandler(handlers.OnInteractionCreate)
-	s.AddHandler(handlers.OnMessageReactionAdd)
-
-	if err := s.Open(); err != nil {
-		return err
-	}
-	defer func() {
-		if err := s.Close(); err != nil {
-			lg.Error().Err(err).Msgf("could not close the bot session")
-		}
-	}()
-	lg.Info().Msgf("bot session opened")
-
-	lg.Info().Msg("creating commands...")
-	for _, v := range handlers.Commands {
-		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, cfg.GuildID, v)
-		if err != nil {
-			lg.Error().Err(err).Msgf("could not create command: %s", v.Name)
-		}
-		lg.Debug().Msgf("command created: %s(%s)", cmd.ID, cmd.Name)
-	}
-
-	lg.Info().Msgf("bot started (CTRL+C to stop)")
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
-	defer stop()
-
-	stopped := make(chan struct{})
-	go func() {
-		lg.Info().Msg("PresenceUpdateLoop started")
-		presence.PresenceUpdateLoop(ctx, s)
-		lg.Info().Msg("PresenceUpdateLoop stopped")
-		stopped <- struct{}{}
-	}()
-
-	<-ctx.Done() // wait for SIGINT
-	lg.Info().Msg("SIGINT received")
-
-	lg.Info().Msg("removing commands...")
-	registeredCommands, err := s.ApplicationCommands(s.State.User.ID, cfg.GuildID)
-	if err != nil {
-		lg.Error().Err(err).Msg("could not fetch registered commands")
-	} else {
-		for _, cmd := range registeredCommands {
-			lg.Debug().Msgf("removing command: %s(%s)", cmd.ID, cmd.Name)
-			if err := s.ApplicationCommandDelete(s.State.User.ID, cfg.GuildID, cmd.ID); err != nil {
-				lg.Error().Err(err).Msgf("could not delete command: %s", cmd.Name)
-			}
-		}
-	}
-
-	// wait for goroutines to exit
-	<-stopped
-	lg.Info().Msg("all components are stopped")
-
-	lg.Info().Msg("bot stopped")
-	return nil
-}
 
 var version = "dev"
 
-// some variables shoud be initialized in init()
 func init() {
-	handlers.Version = version
-
-	// NOTE: this is a workaroud; currenltly ROANavHandler is initalized in init()
-	roanavSaveFile := os.Getenv("CONBUKUN_ROANAV_SAVEFILE")
-	if roanavSaveFile == "" {
-		handlers.ROANavHandlerSaveFile = roanavSaveFile
-	}
+	handlers.Version = version // TODO: this is a workaround
 }
 
 var lg zerolog.Logger = log.With().Str("component", "Conbukun Bot").Logger()
@@ -125,6 +35,8 @@ func main() {
 	flag.StringVar(&token, "token", "", "Bot authentication token")
 	var gid string
 	flag.StringVar(&gid, "gid", "", "Guild ID or registers commands globally")
+	var saveDir string
+	flag.StringVar(&saveDir, "save-dir", "", "Save directory")
 	flag.Parse()
 
 	envToken := os.Getenv("CONBUKUN_AUTH_TOKEN")
@@ -135,13 +47,18 @@ func main() {
 	if gid == "" {
 		gid = envGID
 	}
+	envSaveDir := os.Getenv("CONBUKUN_SAVE_DIR")
+	if saveDir == "" {
+		saveDir = envSaveDir
+	}
 
-	cfg := Config{
+	cfg := bot.Config{
+		Version:                       version,
 		Verbose:                       logLevel,
 		Token:                         token,
 		GuildID:                       gid,
-		ROANavHandlerSaveFile:         "NOT_USED",
-		ROANavHandlerSuggestionsLimit: 5, // not used
+		ROANavHandlerSaveFile:         filepath.Join(saveDir, "roanav.json"),
+		ROANavHandlerSuggestionsLimit: handlers.DefaultROANavHandlerSuggestionsLimit,
 	}
 
 	switch cfg.Verbose {
@@ -160,7 +77,13 @@ func main() {
 	}
 
 	lg.Info().Msgf("conbukun version=%v", version)
-	if err := run(cfg); err != nil {
+
+	b, err := bot.New(cfg)
+	if err != nil {
+		lg.Fatal().Err(err).Msg("could not create bot")
+	}
+
+	if err := b.Run(cfg); err != nil {
 		lg.Fatal().Err(err).Msg("stopped")
 	}
 }
