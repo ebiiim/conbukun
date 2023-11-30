@@ -132,12 +132,17 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 		case PortalTypeYellow:
 			color = "gold"
 		}
+
+		ts := strings.TrimSuffix(portal.ExpiredAt.Sub(t).Truncate(time.Minute).String(), "0s")
+		if ts == "" {
+			ts = "<1m"
+		}
+
 		templateData.Links = append(templateData.Links, templateDataLink{
 			FromAlias: aliasFrom,
 			ToAlias:   aliasTo,
 			// 2h30m0s -> 2h30m
-			// NOTE: less than 1 minute is not shown (wontfix as this is a trivial issue)
-			Duration: strings.TrimSuffix(portal.ExpiredAt.Sub(t).Truncate(time.Minute).String(), "0s"),
+			Duration: ts,
 			Color:    color,
 		})
 	}
@@ -166,6 +171,20 @@ func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string) (template
 	d.Name = fmt.Sprintf("%s\\n%s %s", mapName, data.GetMapType(md), data.GetMapTier(md))
 	d.Alias = toAlias(portalID)
 
+	color := ""
+	switch data.GetMapType(md) {
+	case data.MapTypeBlackZone:
+		color = "#dimgray;text:white"
+	case data.MapTypeRedZone:
+		color = "#firebrick;text:white"
+	case data.MapTypeYellowZone:
+		color = "#gold"
+	case data.MapTypeCity, data.MapTypeBlueZone:
+		color = "#aqua"
+	}
+
+	d.Color = color
+
 	return d, nil
 }
 
@@ -177,7 +196,7 @@ func init() {
 
 caption "Contributors: {{ .Contributors }}\nTimestamp: {{ .GeneratedAt }}\nAffiliation: {{ .Credit }}"
 {{ range $val := .Agents }}
-agent "{{ $val.Name }}" as {{ $val.Alias }}
+agent "{{ $val.Name }}" as {{ $val.Alias }} {{ $val.Color }}
 {{- end}}
 {{ range $val := .Links }}
 {{ $val.FromAlias }} <-[#{{ $val.Color }}]-> {{ $val.ToAlias }} : "{{ $val.Duration }}"
@@ -207,6 +226,7 @@ type templateData struct {
 type templateDataAgent struct {
 	Name  string
 	Alias string
+	Color string
 }
 
 type templateDataLink struct {
