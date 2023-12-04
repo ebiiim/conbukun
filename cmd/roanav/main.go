@@ -143,11 +143,26 @@ func mustPaintPlantUML(p *roanav.KrokiPlantUMLPNGPainter, n *roanav.Navigation, 
 
 func main() {
 
-	p := roanav.NewKrokiPlantUMLPNGPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps)
-
 	n1 := nav1()
-	mustPaintPlantUML(p, n1, data.Maps)
-
 	n2 := nav2()
-	mustPaintPlantUML(p, n2, data.Maps)
+	_ = n1
+	_ = n2
+
+	// // Style: Auto
+	// p1 := roanav.NewKrokiPlantUMLPNGPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps, roanav.PlantUMLStyleAuto)
+	// _ = p1
+	// mustPaintPlantUML(p1, n1, data.Maps)
+	// mustPaintPlantUML(p1, n2, data.Maps)
+
+	// Style: PlantUML
+	p2 := roanav.NewKrokiPlantUMLPNGPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps, roanav.PlantUMLStylePlantUML)
+	_ = p2
+	mustPaintPlantUML(p2, n1, data.Maps)
+	mustPaintPlantUML(p2, n2, data.Maps)
+
+	// Style: DOT
+	p3 := roanav.NewKrokiPlantUMLPNGPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps, roanav.PlantUMLStyleDOT)
+	_ = p3
+	mustPaintPlantUML(p3, n1, data.Maps)
+	mustPaintPlantUML(p3, n2, data.Maps)
 }

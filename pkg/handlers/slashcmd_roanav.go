@@ -336,7 +336,7 @@ func (h *ROANavHandler) HandleCmdRoutePrint(s *discordgo.Session, i *discordgo.I
 	}
 
 	// Generate PlantUML.
-	p := roanav.NewKrokiPlantUMLPNGPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps)
+	p := roanav.NewKrokiPlantUMLPNGPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps, roanav.PlantUMLStyleAuto)
 	dist, err := p.Paint(nav)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not generate PlantUML")
@@ -403,7 +403,7 @@ func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.I
 	}
 
 	// Generate PlantUML.
-	p := roanav.NewKrokiPlantUMLPNGPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps)
+	p := roanav.NewKrokiPlantUMLPNGPainter(roanav.DefaultKrokiEndpoint, roanav.DefaultKrokiTimeout, data.Maps, roanav.PlantUMLStyleAuto)
 	dist, err := p.Paint(nav)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not generate PlantUML")

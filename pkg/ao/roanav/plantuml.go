@@ -18,9 +18,16 @@ import (
 
 var lg zerolog.Logger = log.With().Str("component", "conbukun/pkg/ao/roanav").Logger()
 
+const (
+	PlantUMLStyleAuto     = "auto" // if len(edges)<32 use plantuml else use dot
+	PlantUMLStylePlantUML = "plantuml"
+	PlantUMLStyleDOT      = "dot"
+)
+
 type KrokiPlantUMLPNGPainter struct {
 	Client  kroki.Client
 	MapData map[string]data.MapData
+	Style   string
 }
 
 var _ Painter = (*KrokiPlantUMLPNGPainter)(nil)
@@ -30,20 +37,21 @@ const (
 	DefaultKrokiTimeout  = 10 * time.Second
 )
 
-func NewKrokiPlantUMLPNGPainter(endpoint string, timeout time.Duration, mapData map[string]data.MapData) *KrokiPlantUMLPNGPainter {
-	lg.Info().Str("func", "NewKrokiPlantUMLPainter").Msgf("endpoint=%s, timeout=%s, len(mapData)=%d", endpoint, timeout, len(mapData))
+func NewKrokiPlantUMLPNGPainter(endpoint string, timeout time.Duration, mapData map[string]data.MapData, style string) *KrokiPlantUMLPNGPainter {
+	lg.Info().Str("func", "NewKrokiPlantUMLPainter").Msgf("endpoint=%s, timeout=%s, style=%s, len(mapData)=%d", endpoint, timeout, style, len(mapData))
 	p := &KrokiPlantUMLPNGPainter{
 		Client: kroki.New(kroki.Configuration{
 			URL:     endpoint,
 			Timeout: timeout,
 		}),
 		MapData: mapData,
+		Style:   style,
 	}
 	return p
 }
 
 func (p *KrokiPlantUMLPNGPainter) Paint(n *Navigation) (path string, err error) {
-	lg := lg.With().Str("func", "Paint").Str("Navigation.Name", n.Name).Logger()
+	lg := lg.With().Str("func", "Paint").Str("style", p.Style).Str("Navigation.Name", n.Name).Logger()
 
 	pu, err := p.ToPlantUML(n)
 	if err != nil {
@@ -66,14 +74,30 @@ func (p *KrokiPlantUMLPNGPainter) Paint(n *Navigation) (path string, err error) 
 }
 
 func (p *KrokiPlantUMLPNGPainter) ToPlantUML(n *Navigation) (string, error) {
-	lg := lg.With().Str("func", "ToPlantUML").Str("Navigation.Name", n.Name).Logger()
+	lg := lg.With().Str("func", "ToPlantUML").Str("style", p.Style).Str("Navigation.Name", n.Name).Logger()
 
 	tmplData, err := p.NavigationToTemplateData(n, time.Now())
 	if err != nil {
 		lg.Warn().Err(err).Msg("p.NavigationToTemplateData got more than one error (still continuing)")
 	}
+
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, tmplData); err != nil {
+	switch p.Style {
+	case PlantUMLStyleAuto:
+		if len(tmplData.Edges) < 32 {
+			err = tmplStylePlantUML.Execute(&buf, tmplData)
+		} else {
+			err = tmplStyleDOT.Execute(&buf, tmplData)
+		}
+	case PlantUMLStylePlantUML:
+		err = tmplStylePlantUML.Execute(&buf, tmplData)
+	case PlantUMLStyleDOT:
+		err = tmplStyleDOT.Execute(&buf, tmplData)
+	default:
+		err = fmt.Errorf("unknown style: %s", p.Style)
+	}
+
+	if err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -84,9 +108,9 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 	templateData := templateData{
 		GeneratedAt:  "ERROR",
 		Contributors: "ERROR",
-		Credit:       "ERROR",
-		Agents:       []templateDataAgent{},
-		Links:        []templateDataLink{},
+		Affiliation:  "ERROR",
+		Nodes:        []templateDataNode{},
+		Edges:        []templateDataEdge{},
 	}
 
 	templateData.GeneratedAt = t.Format("2006-01-02 15:04:05 MST")
@@ -103,11 +127,11 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 	}
 	templateData.Contributors = strings.Join(contribS, ", ")
 
-	templateData.Credit = fmt.Sprintf("%s (conbukun@%s)", n.Name, ao.Version)
+	templateData.Affiliation = fmt.Sprintf("%s (conbukun@%s)", n.Name, ao.Version)
 
 	var errs error
 
-	agentsM := map[string]templateDataAgent{}
+	agentsM := map[string]templateDataNode{}
 	for _, portal := range n.Portals {
 		aliasFrom := toAlias(portal.From)
 		aliasTo := toAlias(portal.To)
@@ -139,7 +163,7 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 			ts = "<1m"
 		}
 
-		templateData.Links = append(templateData.Links, templateDataLink{
+		templateData.Edges = append(templateData.Edges, templateDataEdge{
 			FromAlias: aliasFrom,
 			ToAlias:   aliasTo,
 			// 2h30m0s -> 2h30m
@@ -149,14 +173,14 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 	}
 
 	for _, v := range agentsM {
-		templateData.Agents = append(templateData.Agents, v)
+		templateData.Nodes = append(templateData.Nodes, v)
 	}
 
 	return templateData, errs
 }
 
-func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string, navigationData map[string]string) (templateDataAgent, error) {
-	d := templateDataAgent{}
+func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string, navigationData map[string]string) (templateDataNode, error) {
+	d := templateDataNode{}
 
 	md, ok := p.MapData[portalID]
 	if !ok {
@@ -173,51 +197,104 @@ func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string, navigatio
 	d.Name = fmt.Sprintf("%s (%s)", mapName, data.GetMapTier(md))
 	d.Alias = toAlias(portalID)
 
-	color := ""
+	fillColor := ""
+	textColor := ""
 	switch data.GetMapType(md) {
 	case data.MapTypeBlackZone:
-		color = "#dimgray;text:white"
+		fillColor = "dimgray"
+		textColor = "white"
 	case data.MapTypeRedZone:
-		color = "#firebrick;text:white"
+		fillColor = "firebrick"
+		textColor = "white"
 	case data.MapTypeYellowZone:
-		color = "#gold"
+		fillColor = "gold"
+		textColor = "black"
 	case data.MapTypeCity, data.MapTypeBlueZone:
-		color = "#lightskyblue"
+		fillColor = "lightskyblue"
+		textColor = "black"
+	default:
+		fillColor = "whitesmoke"
+		textColor = "black"
 	}
 
 	// check hideout
 	if v, ok := navigationData[NavigationDataHideouts]; ok {
 		for _, hideout := range strings.Split(v, ",") {
 			if hideout == portalID {
-				color = "#green;text:white"
+				fillColor = "darkgreen"
+				textColor = "white"
 				break
 			}
 		}
 	}
 
-	d.Color = color
+	d.FillColor = fillColor
+	d.TextColor = textColor
 
 	return d, nil
 }
 
-var tmpl *template.Template
+var (
+	tmplStylePlantUML *template.Template
+	tmplStyleDOT      *template.Template
+)
 
 func init() {
-	tmpl = template.Must(template.New("plantuml").Parse(`
+	tmplStylePlantUML = template.Must(template.New("plantuml").Parse(`
 @startuml
 
 skinparam handwritten true
 skinparam backgroundColor #F8F5EB
-caption "Contributors: {{ .Contributors }}\nTimestamp: {{ .GeneratedAt }}\nAffiliation: {{ .Credit }}"
-{{ range $val := .Agents }}
-agent "{{ $val.Name }}" as {{ $val.Alias }} {{ $val.Color }}
+caption "Contributors: {{ .Contributors }}\nTimestamp: {{ .GeneratedAt }}\nAffiliation: {{ .Affiliation }}"
+{{ range $val := .Nodes }}
+agent "{{ $val.Name }}" as {{ $val.Alias }} #{{ $val.FillColor }};text:{{ $val.TextColor }}
 {{- end}}
-{{ range $val := .Links }}
+{{ range $val := .Edges }}
 {{ $val.FromAlias }} <-[#{{ $val.Color }}]-> {{ $val.ToAlias }} : "{{ $val.Duration }}"
 {{- end}}
 
 @enduml
 `))
+
+	tmplStyleDOT = template.Must(template.New("dot").Parse(`
+@startdot
+
+digraph g {
+  
+  charset = "UTF-8";
+  bgcolor = "#F8F5EB"
+  label = "Affiliation: {{ .Affiliation }}\nTimestamp: {{ .GeneratedAt }}\nContributors: {{ .Contributors }}"
+
+  graph [
+    overlap = scale;
+    layout = fdp;
+    labelloc = t;
+    labeljust = c;
+  ];
+
+  node [
+    shape = box;
+	style = "rounded,filled";
+  ];
+
+  edge [
+    dir = both;
+    labelfloat = true; 
+  ];
+
+{{ range $val := .Nodes }}
+  "{{ $val.Alias }}" [label="{{ $val.Name }}", color="darkgray", fillcolor="{{ $val.FillColor }}", fontcolor="{{ $val.TextColor }}"] 
+{{- end}}
+
+{{ range $val := .Edges }}
+  {{ $val.FromAlias }} -> {{ $val.ToAlias }} [label="{{ $val.Duration }}", color="{{ $val.Color }}"]
+{{- end}}
+
+}
+
+@enddot
+`))
+
 }
 
 func toAlias(s string) string {
@@ -231,19 +308,20 @@ func toAlias(s string) string {
 type templateData struct {
 	GeneratedAt  string
 	Contributors string
-	Credit       string
+	Affiliation  string
 
-	Agents []templateDataAgent
-	Links  []templateDataLink
+	Nodes []templateDataNode
+	Edges []templateDataEdge
 }
 
-type templateDataAgent struct {
-	Name  string
-	Alias string
-	Color string
+type templateDataNode struct {
+	Name      string
+	Alias     string
+	FillColor string
+	TextColor string
 }
 
-type templateDataLink struct {
+type templateDataEdge struct {
 	FromAlias string
 	ToAlias   string
 	Duration  string
