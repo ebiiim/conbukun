@@ -30,7 +30,7 @@ const (
 	DefaultKrokiTimeout  = 10 * time.Second
 )
 
-func NewKrokiPlantUMLPainter(endpoint string, timeout time.Duration, mapData map[string]data.MapData) *KrokiPlantUMLPNGPainter {
+func NewKrokiPlantUMLPNGPainter(endpoint string, timeout time.Duration, mapData map[string]data.MapData) *KrokiPlantUMLPNGPainter {
 	lg.Info().Str("func", "NewKrokiPlantUMLPainter").Msgf("endpoint=%s, timeout=%s, len(mapData)=%d", endpoint, timeout, len(mapData))
 	p := &KrokiPlantUMLPNGPainter{
 		Client: kroki.New(kroki.Configuration{
