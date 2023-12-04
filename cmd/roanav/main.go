@@ -32,7 +32,7 @@ func main() {
 	mdFF := mustGetMD("Fog Fen")          // Blue
 
 	n := &roanav.Navigation{
-		Name: "MyGuild#ROA (conbukun@v1.3.0)",
+		Name: "MyGuild#ROA",
 		Portals: []*roanav.Portal{
 			roanav.NewPortal(mdQSV.ID, mdQQV.ID, roanav.PortalTypeBlue, time.Now().Add(3*time.Hour), map[string]string{roanav.PortalDataKeyUser: "user1"}),
 			roanav.NewPortal(mdQSV.ID, mdQV.ID, roanav.PortalTypeYellow, time.Now().Add(9*time.Hour), map[string]string{roanav.PortalDataKeyUser: "user2"}),
