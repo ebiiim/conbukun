@@ -197,7 +197,7 @@ func getNavNameAndUserName(s *discordgo.Session, i *discordgo.InteractionCreate)
 
 	if isDM {
 		userName = i.User.Username
-		navName = fmt.Sprintf("DM#%s (conbukun@%s)", i.User.Username, Version)
+		navName = fmt.Sprintf("@%s", i.User.Username)
 	} else {
 		members, iErr := s.GuildMembers(i.GuildID, "", 1000)
 		if iErr != nil {
@@ -217,7 +217,7 @@ func getNavNameAndUserName(s *discordgo.Session, i *discordgo.InteractionCreate)
 		if err != nil {
 			return "", "", err
 		}
-		navName = fmt.Sprintf("%s#%s (conbukun@%s)", g.Name, c.Name, Version)
+		navName = fmt.Sprintf("%s#%s", g.Name, c.Name)
 	}
 
 	return

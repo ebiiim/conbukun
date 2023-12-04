@@ -12,6 +12,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var Version = "dev" // main.go injects this value
+
 var lg zerolog.Logger = log.With().Str("component", "conbukun/pkg/bot").Logger()
 
 type Config struct {

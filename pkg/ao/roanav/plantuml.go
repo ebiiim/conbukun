@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	kroki "github.com/yuzutech/kroki-go"
 
+	"github.com/ebiiim/conbukun/pkg/ao"
 	"github.com/ebiiim/conbukun/pkg/ao/data"
 )
 
@@ -102,7 +103,7 @@ func (p *KrokiPlantUMLPNGPainter) NavigationToTemplateData(n *Navigation, t time
 	}
 	templateData.Contributors = strings.Join(contribS, ", ")
 
-	templateData.Credit = n.Name
+	templateData.Credit = fmt.Sprintf("%s (conbukun@%s)", n.Name, ao.Version)
 
 	var errs error
 

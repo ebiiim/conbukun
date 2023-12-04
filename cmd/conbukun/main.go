@@ -9,14 +9,19 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/ebiiim/conbukun/pkg/ao"
 	"github.com/ebiiim/conbukun/pkg/bot"
 	"github.com/ebiiim/conbukun/pkg/handlers"
+	"github.com/ebiiim/conbukun/pkg/presence"
 )
 
 var version = "dev"
 
 func init() {
-	handlers.Version = version // TODO: this is a workaround
+	handlers.Version = version
+	presence.Version = version
+	bot.Version = version
+	ao.Version = version
 }
 
 var lg zerolog.Logger = log.With().Str("component", "Conbukun Bot").Logger()
@@ -53,7 +58,6 @@ func main() {
 	}
 
 	cfg := bot.Config{
-		Version:                       version,
 		Verbose:                       logLevel,
 		Token:                         token,
 		GuildID:                       gid,
