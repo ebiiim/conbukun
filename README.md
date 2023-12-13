@@ -21,6 +21,7 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 - [ライセンス](#%E3%83%A9%E3%82%A4%E3%82%BB%E3%83%B3%E3%82%B9)
 - [利用規約（Terms of Service）](#%E5%88%A9%E7%94%A8%E8%A6%8F%E7%B4%84terms-of-service)
 - [プライバシーポリシー（Privacy Policy）](#%E3%83%97%E3%83%A9%E3%82%A4%E3%83%90%E3%82%B7%E3%83%BC%E3%83%9D%E3%83%AA%E3%82%B7%E3%83%BCprivacy-policy)
+- [よくある質問（Frequently Asked Questions）](#%E3%82%88%E3%81%8F%E3%81%82%E3%82%8B%E8%B3%AA%E5%95%8Ffrequently-asked-questions)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -136,3 +137,47 @@ The Privacy Policy of conbukun (the Service) is as follows.
 
 - View of data: In order to provide the service, the Service processes messages and reactions, limited to direct messages to the Service's bots and channels where read permissions have been granted.
 - Collection of data: For analytic purposes, the Service anonymously collects messages and reactions, limited to direct messages to the Service's bots and channels where read permissions have been granted.
+
+## よくある質問（Frequently Asked Questions）
+
+##### Q: こんぶくんって誰ですか？
+
+##### A: 真のギルドマスターです。
+
+##### Q: ルートナビ機能はゲームの利用規約に抵触しますか？
+
+##### A: いいえ。理由は次のとおりです。
+
+1. [こちらの告知](https://forum.albiononline.com/index.php/Thread/135576-Roads-of-Avalon-Mapping-GPS-Tools/)にある「bannable offence」に該当しない。
+   - ユーザは**手動**で情報（ゾーン名、ポータルの種類、残り時間など）を入力する。
+   - ゲーム内のリアルタイムの情報を自動的に取得**しない**（例：画面や通信の解析など）。
+   - 一般的に、本機能がもたらす利益は紙とペンやスプレッドシートと同等であると考えられる。
+
+2. [こちらの告知](https://forum.albiononline.com/index.php/Thread/124819-Regarding-3rd-Party-Software-and-Network-Traffic-aka-do-not-cheat-Update-16-45-U/)にあるチート行為に該当しない。
+   - ゲームクライアントを改変**しない**。
+   - オーバーレイでは**ない**。
+   - 補助的に用いる情報は、[利用が問題ないと判断された](https://forum.albiononline.com/index.php/Thread/124819-Regarding-3rd-Party-Software-and-Network-Traffic-aka-do-not-cheat-Update-16-45-U/?postID=1001172#post1001172)「[Albion Data Project](https://www.albion-online-data.com/)」のみから得た。
+
+※ ご不明な点がある場合は `mail[AT]ebiiim.com` までお問い合わせください。
+
+---
+
+##### Q: Who is conbukun?
+
+##### A: The TRUE guild master.
+
+##### Q: Does the route navigation feature violate the game's ToS?
+
+##### A: No. Here's why.
+
+1. It does not fall under the "bannable offence" mentioned in [this announcement](https://forum.albiononline.com/index.php/Thread/135576-Roads-of-Avalon-Mapping-GPS-Tools/).
+   - The user **manually** enters information (zone name, portal type, remaining time, etc.).
+   - It does **not** automatically obtain real-time information from the game (e.g. screen or network traffic analysis).
+   - In general, the benefits of this feature are considered to be equivalent to pen and paper or spreadsheets.
+
+2. It does not fall under the "do not cheat" policy mentioned in [this announcement](https://forum.albiononline.com/index.php/Thread/124819-Regarding-3rd-Party-Software-and-Network-Traffic-aka-do-not-cheat-Update-16-45-U/).
+    - It does **not** modify the game client.
+    - It is **not** an overlay tool.
+    - The information supplementary used is obtained only from the "[Albion Data Project](https://www.albion-online-data.com/)", which is [considered to be safe to use](https://forum.albiononline.com/index.php/Thread/124819-Regarding-3rd-Party-Software-and-Network-Traffic-aka-do-not-cheat-Update-16-45-U/?postID=1001172#post1001172).
+
+※ Please contact `mail[AT]ebiiim.com` if anything is unclear.
