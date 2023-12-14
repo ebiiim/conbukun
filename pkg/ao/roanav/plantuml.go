@@ -2,6 +2,7 @@ package roanav
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -34,7 +35,7 @@ var _ Painter = (*KrokiPlantUMLPNGPainter)(nil)
 
 const (
 	DefaultKrokiEndpoint = "https://kroki.io"
-	DefaultKrokiTimeout  = 10 * time.Second
+	DefaultKrokiTimeout  = 60 * time.Second // kroki.io is so slow :(
 )
 
 func NewKrokiPlantUMLPNGPainter(endpoint string, timeout time.Duration, mapData map[string]data.MapData, style string) *KrokiPlantUMLPNGPainter {
@@ -217,14 +218,47 @@ func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string, navigatio
 		textColor = "black"
 	}
 
-	// check hideout
-	if v, ok := navigationData[NavigationDataHideouts]; ok {
-		for _, hideout := range strings.Split(v, ",") {
-			if hideout == portalID {
-				fillColor = "darkgreen"
-				textColor = "white"
+	// check marked maps
+	if v, ok := navigationData[NavigationDataMarkedMaps]; ok {
+		var markedMaps []MarkedMap
+		if err := json.Unmarshal([]byte(v), &markedMaps); err != nil {
+			return d, fmt.Errorf("json.Unmarshal: %w", err)
+		}
+		for _, m := range markedMaps {
+
+			if m.ID == portalID { // found!
+
+				// 1. add comment
+				d.Name = fmt.Sprintf("%s\\n%s", d.Name, m.Comment)
+
+				// 2. change color
+				switch m.Color {
+				case MarkedMapColorNone:
+					// do nothing; herited from above
+				case MarkedMapColorGreen:
+					fillColor = "darkgreen"
+					textColor = "white"
+				case MarkedMapColorPink:
+					fillColor = "deeppink"
+					textColor = "white"
+				case MarkedMapColorPurple:
+					fillColor = "darkviolet"
+					textColor = "white"
+				case MarkedMapColorOrange:
+					fillColor = "orange"
+					textColor = "black"
+				case MarkedMapColorBrown:
+					fillColor = "saddlebrown"
+					textColor = "white"
+				default:
+					// do nothing (normally unreachable)
+				}
+
+				// 3. stop searching
 				break
+
 			}
+
 		}
 	}
 

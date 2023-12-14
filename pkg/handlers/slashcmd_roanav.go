@@ -235,6 +235,7 @@ func (h *ROANavHandler) HandleCmdRouteAddCommand(s *discordgo.Session, i *discor
 		}
 		return
 	}
+	lg = lg.With().Str("navName", navName).Logger()
 
 	// Get the Navigation.
 	nav := h.GetOrCreateNavigation(navName)
@@ -316,6 +317,7 @@ func (h *ROANavHandler) HandleCmdRoutePrint(s *discordgo.Session, i *discordgo.I
 		}
 		return
 	}
+	lg = lg.With().Str("navName", navName).Logger()
 
 	// Get the Navigation.
 	nav := h.GetOrCreateNavigation(navName)
@@ -472,6 +474,25 @@ func (h *ROANavHandler) HandleCmdRouteMarkAutocomplete(s *discordgo.Session, i *
 	}
 }
 
+// updateOrRemoveMarkedMap updates or removes the marked map.
+// If markedMap.Color is none and markedMap.Comment is empty, the element with same markedMap.ID will be removed.
+func updateOrRemoveMarkedMap(markedMaps []roanav.MarkedMap, markedMap roanav.MarkedMap) []roanav.MarkedMap {
+	var m2 []roanav.MarkedMap
+	for _, m := range markedMaps {
+		if m.ID != markedMap.ID {
+			m2 = append(m2, m)
+		} else {
+			if markedMap.Color == roanav.MarkedMapColorNone && markedMap.Comment == "" {
+				// remove
+			} else {
+				// update
+				m2 = append(m2, markedMap)
+			}
+		}
+	}
+	return m2
+}
+
 func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdRouteMark).Str(lkIID, i.ID).Logger()
 
@@ -484,6 +505,7 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 		}
 		return
 	}
+	lg = lg.With().Str("navName", navName).Logger()
 
 	// Get the Navigation.
 	nav := h.GetOrCreateNavigation(navName)
@@ -492,33 +514,76 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 	// Get arguments.
 	optMap := i.ApplicationCommandData().Options[0]
 	targetMap := optMap.StringValue()
-	lg.Info().Str("targetMap", targetMap).Msg("arguments")
+
+	optColor := i.ApplicationCommandData().Options[1]
+	targetColor := optColor.StringValue()
+
+	optComment := i.ApplicationCommandData().Options[2]
+	targetComment := optComment.StringValue()
+
+	lg.Info().Str("map", targetMap).Str("color", targetColor).Str("comment", targetComment).Msg("arguments")
 
 	// Validate arguments.
 	// nothing to validate
 
-	// Init marked maps if not exists.
-	if _, ok := nav.Data[roanav.NavigationDataHideouts]; !ok {
-		nav.Data[roanav.NavigationDataHideouts] = ""
+	// Construct MarkedMap.
+	markedMap := roanav.MarkedMap{
+		ID:      targetMap,
+		Color:   targetColor,
+		Comment: targetComment,
+	}
+
+	// Init MarkedMaps if not exists.
+	if _, ok := nav.Data[roanav.NavigationDataMarkedMaps]; !ok {
+		nav.Data[roanav.NavigationDataMarkedMaps] = "[]"
 	}
 
 	// Get current marked maps.
-	markedMaps := strings.Split(nav.Data[roanav.NavigationDataHideouts], ",")
-
-	// Toggle.
-	var newMarkedMaps []string
-	for _, m := range markedMaps {
-		if m == targetMap {
-			continue
+	var markedMaps []roanav.MarkedMap
+	if err := json.Unmarshal([]byte(nav.Data[roanav.NavigationDataMarkedMaps]), &markedMaps); err != nil {
+		lg.Error().Err(err).Msg("could not unmarshal marked maps")
+		if mErr := respondEphemeralMessage(s, i, fmt.Sprintf("エラー: マークされているマップの取得に失敗したわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
-		newMarkedMaps = append(newMarkedMaps, m)
-	}
-	if len(newMarkedMaps) == len(markedMaps) {
-		newMarkedMaps = append(newMarkedMaps, targetMap)
+		return
 	}
 
-	// Set.
-	nav.Data[roanav.NavigationDataHideouts] = strings.Join(newMarkedMaps, ",")
+	markedMaps = updateOrRemoveMarkedMap(markedMaps, markedMap)
+
+	// Migrate old data.
+	// TODO: remove this migration code in the next version (v1.7?).
+	if _, ok := nav.Data[roanav.NavigationDataHideouts]; ok {
+		// Get old marked maps.
+		oldMarkedMaps := strings.Split(nav.Data[roanav.NavigationDataHideouts], ",")
+		// Migration: add as green marked map if not exists.
+		for _, om := range oldMarkedMaps {
+			var exists bool
+			for _, m := range markedMaps {
+				exists = exists || (m.ID == om)
+			}
+			if !exists {
+				markedMaps = updateOrRemoveMarkedMap(markedMaps, roanav.MarkedMap{
+					ID:      om,
+					Color:   roanav.MarkedMapColorGreen,
+					Comment: "Hideout",
+				})
+			}
+		}
+		// Remove deprecated data.
+		delete(nav.Data, roanav.NavigationDataHideouts)
+		lg.Info().Msg("migrated old hideouts data")
+	}
+
+	// Set new marked maps.
+	markedMapsJSON, err := json.Marshal(markedMaps)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not marshal marked maps")
+		if mErr := respondEphemeralMessage(s, i, fmt.Sprintf("エラー: マークされているマップの保存に失敗したわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
+		return
+	}
+	nav.Data[roanav.NavigationDataMarkedMaps] = string(markedMapsJSON)
 
 	// Save.
 	if err := h.Save(); err != nil {
@@ -527,8 +592,8 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 
 	// String representation.
 	markedMapsStr := ""
-	for _, m := range newMarkedMaps {
-		md, ok := data.Maps[m]
+	for _, m := range markedMaps {
+		md, ok := data.Maps[m.ID]
 		if !ok {
 			continue
 		}
@@ -615,6 +680,45 @@ func (*ROANavHandler) CommandRouteMark() *discordgo.ApplicationCommand {
 				Type:         discordgo.ApplicationCommandOptionString,
 				Autocomplete: true,
 				Required:     true,
+			},
+			{
+				Name:        "color",
+				Description: "なに色にする？（color=None かつ commentなし でマーク削除）",
+				Type:        discordgo.ApplicationCommandOptionString,
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{
+						Name:  "None",
+						Value: roanav.MarkedMapColorNone,
+					},
+					{
+						Name:  "Green",
+						Value: roanav.MarkedMapColorGreen,
+					},
+					{
+						Name:  "Pink",
+						Value: roanav.MarkedMapColorPink,
+					},
+					{
+						Name:  "Purple",
+						Value: roanav.MarkedMapColorPurple,
+					},
+					{
+						Name:  "Orange",
+						Value: roanav.MarkedMapColorOrange,
+					},
+					{
+						Name:  "Brown",
+						Value: roanav.MarkedMapColorBrown,
+					},
+				},
+				Required: true,
+			},
+			{
+				Name:        "comment",
+				Description: "マップ名の下に表示するコメント（任意）",
+				Type:        discordgo.ApplicationCommandOptionString,
+				Required:    false,
+				MaxLength:   20,
 			},
 		},
 	}

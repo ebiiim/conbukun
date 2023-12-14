@@ -50,7 +50,15 @@ func NewPortal(map1, map2, typ string, expiredAt time.Time, data map[string]stri
 }
 
 const (
+	// NavigationDataHideouts is the key for the hideouts data.
+	// The value must be a comma-separated list of map IDs.
+	//
+	// Deprecated: use NavigationDataMarkedMaps instead.
 	NavigationDataHideouts = "hideouts"
+
+	// NavigationDataMarkedMaps is the key for the marked maps data.
+	// The value must be a JSON-encoded list of MarkedMap.
+	NavigationDataMarkedMaps = "marked"
 )
 
 type Navigation struct {
@@ -97,3 +105,19 @@ func (n *Navigation) DeleteExpiredPortals() {
 	}
 	n.Portals = newPortals
 }
+
+// MarkedMap holds the data of a marked map.
+type MarkedMap struct {
+	ID      string `json:"id"`
+	Color   string `json:"color"`
+	Comment string `json:"comment"`
+}
+
+const (
+	MarkedMapColorNone   = "none"
+	MarkedMapColorGreen  = "green"
+	MarkedMapColorPink   = "pink"
+	MarkedMapColorPurple = "purple"
+	MarkedMapColorOrange = "orange"
+	MarkedMapColorBrown  = "brown"
+)

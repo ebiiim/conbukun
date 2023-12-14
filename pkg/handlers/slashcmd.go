@@ -78,7 +78,7 @@ func HandleCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		"- `/route-add` アバロンのルートを追加します。\n" +
 		"- `/route-print` アバロンのルートを画像で投稿します。\n" +
 		"- `/route-clear` アバロンのルートをリセットします。\n" +
-		"- `/route-mark` マップをマークします（色が変わります）。\n" +
+		"- `/route-mark` マップの色を変えたりメモを載せたりします。\n" +
 		"## リアクション\n" +
 		"- **リアクション集計** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, EmojisReactionAddReactionRequired) + "）を行うとリマインダーを投稿します（2分後に自動削除）。\n" +
 		// "- [試験運用中] **リアクション集計（表）** 集計したいメッセージにリアクション（" + emojis2msg(guildEmojis, emojisReactionAddReactionStats) + "）を行うと表形式で投稿します（2分後に削除）。\n" +

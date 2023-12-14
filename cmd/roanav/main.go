@@ -1,12 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/ebiiim/conbukun/pkg/ao/data"
 	"github.com/ebiiim/conbukun/pkg/ao/roanav"
 )
+
+func mustEncodeMarkedMaps(mm []roanav.MarkedMap) string {
+	b, err := json.Marshal(mm)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
+}
 
 func mustGetMD(name string) data.MapData {
 	md, ok := data.GetMapDataFromName(name)
@@ -49,7 +58,7 @@ func nav1() *roanav.Navigation {
 			roanav.NewPortal(mdCA.ID, mdSO.ID, roanav.PortalTypeYellow, time.Now().Add(100*time.Minute), map[string]string{roanav.PortalDataKeyUser: "user1"}),
 		},
 		Data: map[string]string{
-			roanav.NavigationDataHideouts: fmt.Sprintf("%s,", mdQSV.ID),
+			roanav.NavigationDataMarkedMaps: mustEncodeMarkedMaps([]roanav.MarkedMap{}),
 		},
 	}
 	n.DeleteExpiredPortals()
@@ -115,7 +124,14 @@ func nav2() *roanav.Navigation {
 			roanav.NewPortal("TNL-077", "TNL-092", roanav.PortalTypeBlue, time.Now().Add(mustParseDuration("5h31m")), map[string]string{roanav.PortalDataKeyUser: usr}),
 		},
 		Data: map[string]string{
-			roanav.NavigationDataHideouts: "TNL-367",
+			roanav.NavigationDataMarkedMaps: mustEncodeMarkedMaps([]roanav.MarkedMap{
+				{ID: "TNL-149", Color: roanav.MarkedMapColorNone, Comment: "Just a comment"},
+				{ID: "TNL-398", Color: roanav.MarkedMapColorGreen, Comment: "Hoge's Hideout"},
+				{ID: "TNL-367", Color: roanav.MarkedMapColorPink, Comment: "Fuga's Hideout"},
+				{ID: "TNL-357", Color: roanav.MarkedMapColorPurple, Comment: "Purple!"},
+				{ID: "TNL-330", Color: roanav.MarkedMapColorOrange, Comment: "Orange!"},
+				{ID: "TNL-318", Color: roanav.MarkedMapColorBrown, Comment: "Brown!"},
+			}),
 		},
 	}
 	n.DeleteExpiredPortals()
