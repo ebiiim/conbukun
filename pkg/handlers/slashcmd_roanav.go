@@ -474,14 +474,19 @@ func (h *ROANavHandler) HandleCmdRouteMarkAutocomplete(s *discordgo.Session, i *
 	}
 }
 
-// updateOrRemoveMarkedMap updates or removes the marked map.
+// upsertOrRemoveMarkedMap upserts or removes the marked map.
 // If markedMap.Color is none and markedMap.Comment is empty, the element with same markedMap.ID will be removed.
-func updateOrRemoveMarkedMap(markedMaps []roanav.MarkedMap, markedMap roanav.MarkedMap) []roanav.MarkedMap {
+func upsertOrRemoveMarkedMap(markedMaps []roanav.MarkedMap, markedMap roanav.MarkedMap) []roanav.MarkedMap {
+	if markedMap.ID == "" {
+		return markedMaps
+	}
 	var m2 []roanav.MarkedMap
+	isNew := true
 	for _, m := range markedMaps {
 		if m.ID != markedMap.ID {
 			m2 = append(m2, m)
 		} else {
+			isNew = false
 			if markedMap.Color == roanav.MarkedMapColorNone && markedMap.Comment == "" {
 				// remove
 			} else {
@@ -489,6 +494,9 @@ func updateOrRemoveMarkedMap(markedMaps []roanav.MarkedMap, markedMap roanav.Mar
 				m2 = append(m2, markedMap)
 			}
 		}
+	}
+	if isNew && !(markedMap.Color == roanav.MarkedMapColorNone && markedMap.Comment == "") {
+		m2 = append(m2, markedMap)
 	}
 	return m2
 }
@@ -548,7 +556,7 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 		return
 	}
 
-	markedMaps = updateOrRemoveMarkedMap(markedMaps, markedMap)
+	markedMaps = upsertOrRemoveMarkedMap(markedMaps, markedMap)
 
 	// Migrate old data.
 	// TODO: remove this migration code in the next version (v1.7?).
@@ -562,7 +570,7 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 				exists = exists || (m.ID == om)
 			}
 			if !exists {
-				markedMaps = updateOrRemoveMarkedMap(markedMaps, roanav.MarkedMap{
+				markedMaps = upsertOrRemoveMarkedMap(markedMaps, roanav.MarkedMap{
 					ID:      om,
 					Color:   roanav.MarkedMapColorGreen,
 					Comment: "Hideout",

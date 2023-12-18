@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"io"
+	"reflect"
 	"testing"
 
 	"github.com/ebiiim/conbukun/pkg/ao/roanav"
@@ -116,6 +117,53 @@ func TestROANavHandler_ImportNavigations(t *testing.T) {
 				}
 			}
 
+		})
+	}
+}
+
+func Test_updateOrRemoveMarkedMap(t *testing.T) {
+	type args struct {
+		markedMaps []roanav.MarkedMap
+		markedMap  roanav.MarkedMap
+	}
+	tests := []struct {
+		name string
+		args args
+		want []roanav.MarkedMap
+	}{
+		{"add-0to1", args{
+			nil,
+			roanav.MarkedMap{ID: "foo", Color: "bar"},
+		}, []roanav.MarkedMap{
+			{ID: "foo", Color: "bar"},
+		}},
+		{"update", args{
+			[]roanav.MarkedMap{
+				{ID: "foo", Color: "bar"},
+			},
+			roanav.MarkedMap{ID: "foo", Color: "baz"},
+		}, []roanav.MarkedMap{
+			{ID: "foo", Color: "baz"},
+		}},
+		{"delete", args{
+			[]roanav.MarkedMap{
+				{ID: "foo", Color: "bar"},
+				{ID: "hoge", Color: "fuga"},
+			},
+			roanav.MarkedMap{ID: "hoge", Color: roanav.MarkedMapColorNone},
+		}, []roanav.MarkedMap{
+			{ID: "foo", Color: "bar"},
+		}},
+		{"add-empty", args{
+			nil,
+			roanav.MarkedMap{ID: ""},
+		}, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := upsertOrRemoveMarkedMap(tt.args.markedMaps, tt.args.markedMap); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("updateOrRemoveMarkedMap() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
