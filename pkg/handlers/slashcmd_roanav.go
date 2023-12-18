@@ -526,8 +526,11 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 	optColor := i.ApplicationCommandData().Options[1]
 	targetColor := optColor.StringValue()
 
-	optComment := i.ApplicationCommandData().Options[2]
-	targetComment := optComment.StringValue()
+	targetComment := ""
+	if len(i.ApplicationCommandData().Options) >= 3 {
+		optComment := i.ApplicationCommandData().Options[2]
+		targetComment = optComment.StringValue()
+	}
 
 	lg.Info().Str("map", targetMap).Str("color", targetColor).Str("comment", targetComment).Msg("arguments")
 
@@ -605,7 +608,14 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 		if !ok {
 			continue
 		}
-		markedMapsStr += fmt.Sprintf("- %s\n", md.DisplayName)
+		markedMapsStr += fmt.Sprintf("- %s", md.DisplayName)
+		if m.Color != roanav.MarkedMapColorNone {
+			markedMapsStr += fmt.Sprintf(" (%s)", m.Color)
+		}
+		if m.Comment != "" {
+			markedMapsStr += fmt.Sprintf(" \"%s\"", m.Comment)
+		}
+		markedMapsStr += "\n"
 	}
 	markedMapsStr = strings.TrimSuffix(markedMapsStr, "\n")
 
