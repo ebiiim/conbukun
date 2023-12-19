@@ -94,6 +94,15 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
   - 記念すべき初回リリース
   - 機能: `/help` `/mule` `リアクション集計`
 
+### Upgrade Notes
+
+- v1.5.x to v1.6.x
+  - v1.6.xで `/route-mark` を実行するとセーブデータが移行されます。これをやらないとゴミが残ります。
+- v1.4.x to v1.5.x
+  - セーブデータの移行は手動です。各キーの値（ `jq keys[]` ）と各項目のname（ `jq .[].name` ）を `ギルド名#チャネル名` の形式に変更してください（後ろの ` (conbukun@v1.4.x)` を削除、重複は手動でマージ）。
+- before v1.4.x
+  - セーブデータがないため対応不要です。
+
 ## ライセンス
 
 - ソースコード: [MIT License](https://github.com/ebiiim/conbukun/blob/main/LICENSE)
@@ -158,10 +167,10 @@ The Privacy Policy of conbukun (the Service) is as follows.
 
 2. [こちらの告知](https://forum.albiononline.com/index.php/Thread/124819-Regarding-3rd-Party-Software-and-Network-Traffic-aka-do-not-cheat-Update-16-45-U/)にあるチート行為に該当しない。
    - ゲームクライアントを改変**しない**。
-   - オーバーレイでは**ない**。
+   - オーバーレイ**ではない**。
    - 補助的に用いる情報は、[利用が問題ないと判断された](https://forum.albiononline.com/index.php/Thread/124819-Regarding-3rd-Party-Software-and-Network-Traffic-aka-do-not-cheat-Update-16-45-U/?postID=1001172#post1001172)「[Albion Data Project](https://www.albion-online-data.com/)」のみから得た。
 
-※ ご不明な点がある場合は `mail[AT]ebiiim.com` までお問い合わせください。
+※ ご不明な点がある場合は `mail@ebiiim.com` までお問い合わせください。
 
 ---
 
@@ -183,4 +192,4 @@ The Privacy Policy of conbukun (the Service) is as follows.
     - It is **not** an overlay tool.
     - The information supplementary used is obtained only from the "[Albion Data Project](https://www.albion-online-data.com/)", which is [considered to be safe to use](https://forum.albiononline.com/index.php/Thread/124819-Regarding-3rd-Party-Software-and-Network-Traffic-aka-do-not-cheat-Update-16-45-U/?postID=1001172#post1001172).
 
-※ Please contact `mail[AT]ebiiim.com` if anything is unclear.
+※ Please contact `mail@ebiiim.com` if anything is unclear.
