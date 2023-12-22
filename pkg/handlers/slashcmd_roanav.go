@@ -23,7 +23,7 @@ type ROANavHandler struct {
 	navigations      sync.Map
 	MapNameCompleter *MapNameCompleter
 
-	saveFile string
+	saveFile      string
 	saveFileMutex sync.Mutex
 }
 
@@ -92,7 +92,7 @@ func (h *ROANavHandler) Save() error {
 func (h *ROANavHandler) Load() error {
 	h.saveFileMutex.Lock()
 	defer h.saveFileMutex.Unlock()
-	
+
 	if h.saveFile == "" {
 		return nil
 	}
@@ -400,7 +400,7 @@ func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.I
 
 	// Validate.
 	if nav.Portals == nil || len(nav.Portals) == 0 {
-		if mErr := respondEphemeralMessage(s, i, "ルートをクリアしたわん！"); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, "クリアするルートがないわん"); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
@@ -428,7 +428,7 @@ func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.I
 		lg.Error().Err(err).Msg("could not open PNG file")
 	}
 	if _, err := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
-		Content: fmt.Sprintf("%s ルートをクリアしたわん！念のため最後の状態を投稿しておくわん！", getUser(i).Mention()),
+		Content: fmt.Sprintf("%s ルートをクリアしたわん！念のため最後の状態を投稿しておくわん！（バックアップもあるので、間違えた場合は管理者に知らせるわん）", getUser(i).Mention()),
 		Flags:   discordgo.MessageFlagsSuppressNotifications,
 		Files: []*discordgo.File{
 			{
@@ -445,8 +445,26 @@ func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.I
 		return
 	}
 
+	// Backup before clear.
+	currentSaveFile := h.saveFile
+	backupSaveFile := fmt.Sprintf("%s.%d.bak", currentSaveFile, time.Now().UnixNano()) // this is global so use unixnano to avoid collision
+	// [backup save file] critical section start
+	h.saveFileMutex.Lock()
+	h.saveFile = backupSaveFile
+	if err := h.Save(); err != nil {
+		lg.Error().Err(err).Msg("could not backup navigations but just continue")
+	}
+	h.saveFile = currentSaveFile
+	h.saveFileMutex.Unlock()
+	// [backup save file] critical section end
+
 	// Clear.
 	h.DeleteNavigation(navName)
+
+	// Save.
+	if err := h.Save(); err != nil {
+		lg.Error().Err(err).Msg("could not save navigations")
+	}
 }
 
 func (h *ROANavHandler) HandleCmdRouteMark(s *discordgo.Session, i *discordgo.InteractionCreate) {
