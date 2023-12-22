@@ -24,6 +24,7 @@ type ROANavHandler struct {
 	MapNameCompleter *MapNameCompleter
 
 	saveFile string
+	saveFileMutex sync.Mutex
 }
 
 func NewROANavHandler(saveFile string, suggestionsLimit int) (*ROANavHandler, error) {
@@ -52,6 +53,9 @@ func NewROANavHandler(saveFile string, suggestionsLimit int) (*ROANavHandler, er
 }
 
 func (h *ROANavHandler) Save() error {
+	h.saveFileMutex.Lock()
+	defer h.saveFileMutex.Unlock()
+
 	if h.saveFile == "" {
 		return nil
 	}
@@ -86,6 +90,9 @@ func (h *ROANavHandler) Save() error {
 }
 
 func (h *ROANavHandler) Load() error {
+	h.saveFileMutex.Lock()
+	defer h.saveFileMutex.Unlock()
+	
 	if h.saveFile == "" {
 		return nil
 	}
