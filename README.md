@@ -100,18 +100,26 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 
 ### Upgrade Notes
 
+> [!NOTE]
+> 対応が必要なバージョンのみ記載しています（これらのバージョンを経由してください）。
+
 - v1.5.x to v1.6.x
-  - v1.6.xで `/route-mark` を実行するとセーブデータが移行されます。これをやらないとゴミが残ります。
+  - v1.6.xで `/route-mark` を実行するとセーブデータが移行されます。これをやらないとマーク情報が引き継がれず、さらにゴミが残ります。
 - v1.4.x to v1.5.x
   - セーブデータの移行は手動です。各キーの値（ `jq keys[]` ）と各項目のname（ `jq .[].name` ）を `ギルド名#チャネル名` の形式に変更してください（後ろの ` (conbukun@v1.4.x)` を削除、重複は手動でマージ）。
-- before v1.4.x
-  - セーブデータがないため対応不要です。
 
 ## ライセンス
 
 - ソースコード: [MIT License](https://github.com/ebiiim/conbukun/blob/main/LICENSE)
 - ライブラリおよびサブモジュール: それぞれのライセンスを参照のこと
 - 画像: `assets/README.md` を参照のこと
+
+---
+
+> [!NOTE]
+> 以降は稼働中のサービス（Discord Bot）に関する情報です。
+
+---
 
 ## 利用規約（Terms of Service）
 
