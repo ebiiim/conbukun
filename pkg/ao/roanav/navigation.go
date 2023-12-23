@@ -153,6 +153,7 @@ type MarkedMap struct {
 	Color   string `json:"color"`
 	Comment string `json:"comment"`
 	// User who added the entry. Currently only used for display.
+	// NOTE: consider using `Data map[string]string` instead, for code consistency.
 	User string `json:"user"`
 }
 
