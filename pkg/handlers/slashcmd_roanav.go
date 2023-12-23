@@ -446,20 +446,13 @@ func (h *ROANavHandler) HandleCmdRouteClear(s *discordgo.Session, i *discordgo.I
 	}
 
 	// Backup before clear.
-	currentSaveFile := h.saveFile
-	backupSaveFile := fmt.Sprintf("%s.%d.bak", currentSaveFile, time.Now().UnixNano()) // this is global so use unixnano to avoid collision
-	// [backup save file] critical section start
-	h.saveFileMutex.Lock()
-	h.saveFile = backupSaveFile
-	if err := h.Save(); err != nil {
-		lg.Error().Err(err).Msg("could not backup navigations but just continue")
-	}
-	h.saveFile = currentSaveFile
-	h.saveFileMutex.Unlock()
-	// [backup save file] critical section end
+	navbakName := fmt.Sprintf("%s___bak_%d", navName, time.Now().Unix()) // hoge#fuga___bak_1234567890
+	navbak := h.GetOrCreateNavigation(navbakName)
+	nav.DeepCopyInto(navbak)
+	navbak.Name = navbakName
 
 	// Clear.
-	h.DeleteNavigation(navName)
+	nav.Portals = []*roanav.Portal{} // clear portals instead of deleting navigation to keep marked maps
 
 	// Save.
 	if err := h.Save(); err != nil {

@@ -49,6 +49,26 @@ func NewPortal(map1, map2, typ string, expiredAt time.Time, data map[string]stri
 	}
 }
 
+func (p *Portal) DeepCopyInto(out *Portal) {
+	out.From = p.From
+	out.To = p.To
+	out.Type = p.Type
+	out.ExpiredAt = p.ExpiredAt
+	out.Data = map[string]string{}
+	for k, v := range p.Data {
+		out.Data[k] = v
+	}
+}
+
+func (p *Portal) DeepCopy() *Portal {
+	if p == nil {
+		return nil
+	}
+	out := new(Portal)
+	p.DeepCopyInto(out)
+	return out
+}
+
 const (
 	// NavigationDataHideouts is the key for the hideouts data.
 	// The value must be a comma-separated list of map IDs.
@@ -69,6 +89,27 @@ type Navigation struct {
 
 	// Data contains additional data.
 	Data map[string]string `json:"data"`
+}
+
+func (n *Navigation) DeepCopyInto(out *Navigation) {
+	out.Name = n.Name
+	out.Portals = make([]*Portal, len(n.Portals))
+	for i, p := range n.Portals {
+		out.Portals[i] = p.DeepCopy()
+	}
+	out.Data = map[string]string{}
+	for k, v := range n.Data {
+		out.Data[k] = v
+	}
+}
+
+func (n *Navigation) DeepCopy() *Navigation {
+	if n == nil {
+		return nil
+	}
+	out := new(Navigation)
+	n.DeepCopyInto(out)
+	return out
 }
 
 // NewNavigation initializes a Navigation.
