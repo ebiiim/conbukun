@@ -16,7 +16,10 @@ func main() {
 		if _, err := fmt.Scanln(&input); err != nil {
 			continue
 		}
-		fmt.Printf("suggestions: %v\n", c.GetSuggestions(input))
+		fmt.Println("suggestions:")
+		for _, s := range c.GetSuggestions(input) {
+			fmt.Printf("\t%s\n", s)
+		}
 	}
 
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"slices"
 
 	trie "github.com/Vivino/go-autocomplete-trie"
 	"github.com/bwmarrin/discordgo"
@@ -20,7 +21,20 @@ func NewMapNameCompleter(lim int) *MapNameCompleter {
 	t := trie.New()
 	t = t.CaseSensitive()
 
+	// NOTE:
+	//  To find "Brecilien", it is necessary to add "Brecilien" before
+	//  adding other names prefixed with "Brecilien" (e.g. "Brecilien Market").
+	//  I don't know why this happens (a bug?), but anyway we can sort the
+	//  entries in alphabetical order here to avoid the problem.
+	cs := make([]string, len(c))
+	i := 0
 	for k := range c {
+		cs[i] = k
+		i++
+	}
+	slices.Sort(cs)
+
+	for _, k := range cs {
 		t.Insert(k)
 	}
 
