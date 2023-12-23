@@ -523,7 +523,7 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 	lg := lg.With().Str(lkCmd, CmdRouteMark).Str(lkIID, i.ID).Logger()
 
 	// Get names.
-	navName, _, err := getNavNameAndUserName(s, i)
+	navName, userName, err := getNavNameAndUserName(s, i)
 	if err != nil {
 		lg.Error().Err(err).Msg("could not get navigation name or user name")
 		if mErr := respondEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかユーザーの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
@@ -560,6 +560,7 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 		ID:      targetMap,
 		Color:   targetColor,
 		Comment: targetComment,
+		User:    userName,
 	}
 
 	// Init MarkedMaps if not exists.
@@ -632,6 +633,11 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 		}
 		if m.Comment != "" {
 			markedMapsStr += fmt.Sprintf(" \"%s\"", m.Comment)
+		}
+		if m.User != "" {
+			markedMapsStr += fmt.Sprintf(" by %s", m.User)
+		} else {
+			markedMapsStr += " by UNKNOWN_USER" // for backward compatibility
 		}
 		markedMapsStr += "\n"
 	}

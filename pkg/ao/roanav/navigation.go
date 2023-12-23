@@ -152,6 +152,8 @@ type MarkedMap struct {
 	ID      string `json:"id"`
 	Color   string `json:"color"`
 	Comment string `json:"comment"`
+	// User who added the entry. Currently only used for display.
+	User string `json:"user"`
 }
 
 const (
