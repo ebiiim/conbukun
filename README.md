@@ -29,9 +29,7 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 
 `/help` で使い方を表示します。
 
-<details>
-
-<summary>詳しく見る（クリック）</summary>
+<details><summary>詳しく見る（クリック）</summary>
 
 > ## コマンド
 > - `/help` このメッセージを表示します。
@@ -50,10 +48,6 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 
 ## リリースノート
 
-- 今後の課題
-  - 機能: 会話（？）
-  - 内部: マルチインスタンス対応（{リアクション|メンション}ハンドラのGuild ID対応）
-  - 改善: `ルートナビ` エラーメッセージをembedでキレイに出力する
 - 2023-12-24 v1.7.0
   - 改善: `ルートナビ` `/route-clear` 時にバックアップを取得＆マークは削除せずルートだけを削除するようにした
   - 機能: `ルートナビ` `/route-mark` にユーザ名を追加（情報提供目的）
@@ -61,6 +55,9 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 - 2023-12-19 v1.6.0
   - 機能: `ルートナビ` 色指定とコメントを追加
   - 改善: `ルートナビ` ルートが多いときに画像生成に失敗する問題（タイムアウト値を増やした）
+
+<details><summary>続きを表示する（クリック）</summary>
+
 - 2023-12-05 v1.5.0
   - 改善: `ルートナビ` ルートが多くなると画像が横長になるので、ルートが32個以上あるときの描画形式を変更した
   - 修正: `ルートナビ` バージョンがあがるとセーブデータが引き継がれないバグ
@@ -98,7 +95,7 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
   - 記念すべき初回リリース
   - 機能: `/help` `/mule` `リアクション集計`
 
-### Upgrade Notes
+### アップグレードガイド
 
 > [!NOTE]
 > 対応が必要なバージョンのみ記載しています（これらのバージョンを経由してください）。
@@ -107,6 +104,17 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
   - v1.6.xで `/route-mark` を実行するとセーブデータが移行されます。これをやらないとマーク情報が引き継がれず、さらにゴミが残ります。
 - v1.4.x to v1.5.x
   - セーブデータの移行は手動です。各キーの値（ `jq keys[]` ）と各項目のname（ `jq .[].name` ）を `ギルド名#チャネル名` の形式に変更してください（後ろの ` (conbukun@v1.4.x)` を削除、重複は手動でマージ）。
+
+</details>
+
+### その他
+
+- 既知のバグ
+  - なし
+- 今後の課題
+  - 機能: 会話AIほしくない？
+  - 改善: 情報やエラーメッセージをembedでキレイに表示したい
+  - 内部: マルチインスタンス対応（{リアクション|メンション}ハンドラのGuild ID対応）
 
 ## ライセンス
 
