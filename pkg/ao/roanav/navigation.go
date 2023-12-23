@@ -70,12 +70,6 @@ func (p *Portal) DeepCopy() *Portal {
 }
 
 const (
-	// NavigationDataHideouts is the key for the hideouts data.
-	// The value must be a comma-separated list of map IDs.
-	//
-	// Deprecated: use NavigationDataMarkedMaps instead.
-	NavigationDataHideouts = "hideouts"
-
 	// NavigationDataMarkedMaps is the key for the marked maps data.
 	// The value must be a JSON-encoded list of MarkedMap.
 	NavigationDataMarkedMaps = "marked"

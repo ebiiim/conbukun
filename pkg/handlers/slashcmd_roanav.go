@@ -580,30 +580,6 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 
 	markedMaps = upsertOrRemoveMarkedMap(markedMaps, markedMap)
 
-	// Migrate old data.
-	// TODO: remove this migration code in the next version (v1.7?).
-	if _, ok := nav.Data[roanav.NavigationDataHideouts]; ok {
-		// Get old marked maps.
-		oldMarkedMaps := strings.Split(nav.Data[roanav.NavigationDataHideouts], ",")
-		// Migration: add as green marked map if not exists.
-		for _, om := range oldMarkedMaps {
-			var exists bool
-			for _, m := range markedMaps {
-				exists = exists || (m.ID == om)
-			}
-			if !exists {
-				markedMaps = upsertOrRemoveMarkedMap(markedMaps, roanav.MarkedMap{
-					ID:      om,
-					Color:   roanav.MarkedMapColorGreen,
-					Comment: "Hideout",
-				})
-			}
-		}
-		// Remove deprecated data.
-		delete(nav.Data, roanav.NavigationDataHideouts)
-		lg.Info().Msg("migrated old hideouts data")
-	}
-
 	// Set new marked maps.
 	markedMapsJSON, err := json.Marshal(markedMaps)
 	if err != nil {
