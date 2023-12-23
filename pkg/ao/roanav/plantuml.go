@@ -229,7 +229,9 @@ func (p *KrokiPlantUMLPNGPainter) toTemplateDataAgent(portalID string, navigatio
 			if m.ID == portalID { // found!
 
 				// 1. add comment
-				d.Name = fmt.Sprintf("%s\\n%s", d.Name, m.Comment)
+				if m.Comment != "" {
+					d.Name = fmt.Sprintf("%s\\n%s", d.Name, m.Comment)
+				}
 
 				// 2. change color
 				switch m.Color {
