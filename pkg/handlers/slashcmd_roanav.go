@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -126,6 +125,7 @@ func (h *ROANavHandler) Load() error {
 	return nil
 }
 
+// GetOrCreateNavigation always returns a non-nil value.
 func (h *ROANavHandler) GetOrCreateNavigation(name string) *roanav.Navigation {
 	if v, ok := h.navigations.Load(name); ok {
 		return v.(*roanav.Navigation)
@@ -230,6 +230,60 @@ func getNavNameAndUserName(s *discordgo.Session, i *discordgo.InteractionCreate)
 	return
 }
 
+func (h *ROANavHandler) HandleCmdRouteList(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	lg := lg.With().Str(lkCmd, CmdRouteList).Str(lkIID, i.ID).Logger()
+
+	// Get names.
+	navName, _, err := getNavNameAndUserName(s, i)
+	if err != nil {
+		lg.Error().Err(err).Msg("could not get navigation name or user name")
+		if mErr := respondEphemeralMessage(s, i, fmt.Sprintf("エラー: サーバーかユーザーの名前が取得できなかったわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
+		return
+	}
+	lg = lg.With().Str("navName", navName).Logger()
+
+	// Get the Navigation.
+	nav := h.GetOrCreateNavigation(navName)
+	nav.DeleteExpiredPortals()
+
+	// Get MarkedMaps.
+	var markedMaps []roanav.MarkedMap
+	if err := json.Unmarshal([]byte(nav.Data[roanav.NavigationDataMarkedMaps]), &markedMaps); err != nil {
+		lg.Error().Err(err).Msg("could not unmarshal marked maps")
+		if mErr := respondEphemeralMessage(s, i, fmt.Sprintf("エラー: マークされているマップの取得に失敗したわん。何回も発生する場合は管理者に知らせてほしいわん。 ```\n%v```", err)); mErr != nil {
+			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+		}
+		return
+	}
+
+	// Construct response.
+	var resp string
+	resp += "いまこんな感じだわん！ `/route-add` でルートを追加、 `/route-mark` でコメント、 `/route-print` で画像を投稿するわん！\n"
+	resp += "\n"
+	resp += "***有効なルート***\n"
+	srt := roanav.BriefNavigation(nav, data.Maps)
+	if srt == "" {
+		resp += "（なし）\n"
+	} else {
+		resp += srt
+	}
+	resp += "\n"
+	resp += "***マークされているマップ***\n"
+	smm := briefMarkedMaps(markedMaps)
+	if smm == "" {
+		resp += "（なし）\n"
+	} else {
+		resp += smm
+	}
+
+	// Send response.
+	if mErr := respondEphemeralMessage(s, i, resp); mErr != nil {
+		lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+	}
+}
+
 func (h *ROANavHandler) HandleCmdRouteAddCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdRouteAdd).Str(lkIID, i.ID).Logger()
 
@@ -306,7 +360,7 @@ func (h *ROANavHandler) HandleCmdRouteAddCommand(s *discordgo.Session, i *discor
 	}
 
 	if mErr := respondEphemeralMessage(s, i,
-		fmt.Sprintf("追加したわん！いまこんな感じ！\n%s`/route-print` で画像を投稿できるわん！", roanav.BriefNavigation(nav, data.Maps)),
+		"ありがとうわん！ `/route-list` で確認、 `/route-print` で画像を投稿してみんなと共有するわん！",
 	); mErr != nil {
 		lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 	}
@@ -519,6 +573,31 @@ func upsertOrRemoveMarkedMap(markedMaps []roanav.MarkedMap, markedMap roanav.Mar
 	return m2
 }
 
+// briefMarkedMaps returns a string representation of marked maps for printing.
+func briefMarkedMaps(markedMaps []roanav.MarkedMap) string {
+	markedMapsStr := ""
+	for _, m := range markedMaps {
+		md, ok := data.Maps[m.ID]
+		if !ok {
+			continue
+		}
+		markedMapsStr += fmt.Sprintf("- %s", md.DisplayName)
+		if m.Color != roanav.MarkedMapColorNone {
+			markedMapsStr += fmt.Sprintf(" (%s)", m.Color)
+		}
+		if m.Comment != "" {
+			markedMapsStr += fmt.Sprintf(" \"%s\"", m.Comment)
+		}
+		if m.User != "" {
+			markedMapsStr += fmt.Sprintf(" by %s", m.User)
+		} else {
+			markedMapsStr += " by ユーザ情報なし" // for backward compatibility
+		}
+		markedMapsStr += "\n"
+	}
+	return markedMapsStr
+}
+
 func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	lg := lg.With().Str(lkCmd, CmdRouteMark).Str(lkIID, i.ID).Logger()
 
@@ -596,40 +675,24 @@ func (h *ROANavHandler) HandleCmdRouteMarkCommand(s *discordgo.Session, i *disco
 		lg.Error().Err(err).Msg("could not save navigations")
 	}
 
-	// String representation.
-	markedMapsStr := ""
-	for _, m := range markedMaps {
-		md, ok := data.Maps[m.ID]
-		if !ok {
-			continue
-		}
-		markedMapsStr += fmt.Sprintf("- %s", md.DisplayName)
-		if m.Color != roanav.MarkedMapColorNone {
-			markedMapsStr += fmt.Sprintf(" (%s)", m.Color)
-		}
-		if m.Comment != "" {
-			markedMapsStr += fmt.Sprintf(" \"%s\"", m.Comment)
-		}
-		if m.User != "" {
-			markedMapsStr += fmt.Sprintf(" by %s", m.User)
-		} else {
-			markedMapsStr += " by UNKNOWN_USER" // for backward compatibility
-		}
-		markedMapsStr += "\n"
-	}
-	markedMapsStr = strings.TrimSuffix(markedMapsStr, "\n")
-
 	if mErr := respondEphemeralMessage(s, i,
-		fmt.Sprintf("対象をマークまたはアンマークしたわん！現在マークされているマップはこんな感じわん！\n%s", markedMapsStr),
+		"わかったわん！ `/route-list` でいまの状態を確認できるわん！\n",
 	); mErr != nil {
 		lg.Error().Err(mErr).Msg("could not send InteractionResponse")
+	}
+}
+
+func (*ROANavHandler) CommandRouteList() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        CmdRouteList,
+		Description: "こんぶくんに知ってる情報をこっそり教えてもらう（確認用）",
 	}
 }
 
 func (*ROANavHandler) CommandRouteAdd() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        CmdRouteAdd,
-		Description: "こんぶくんにアバロンのルートを覚えてもらう",
+		Description: "こんぶくんにアバロンのルートを覚えてもらう（チャンネルごとに分かれてるよ！）",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:         "from",
@@ -676,21 +739,21 @@ func (*ROANavHandler) CommandRouteAdd() *discordgo.ApplicationCommand {
 func (*ROANavHandler) CommandRoutePrint() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        CmdRoutePrint,
-		Description: "こんぶくんに覚えているアバロンのルートを画像で投稿してもらう",
+		Description: "こんぶくんに覚えているアバロンのルートを画像でチャンネルに投稿してもらう（みんなに共有！）",
 	}
 }
 
 func (*ROANavHandler) CommandRouteClear() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        CmdRouteClear,
-		Description: "こんぶくんに覚えているアバロンのルートを全部忘れてもらう",
+		Description: "[取扱注意] こんぶくんに覚えているアバロンのルートを全部忘れてもらう（リセット機能）",
 	}
 }
 
 func (*ROANavHandler) CommandRouteMark() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        CmdRouteMark,
-		Description: "こんぶくんに特別なマップに色をつけてもらう（再実行で解除）",
+		Description: "こんぶくんに特別なマップに色をつけてもらう",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:         "map",
