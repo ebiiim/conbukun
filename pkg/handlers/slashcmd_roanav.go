@@ -388,7 +388,7 @@ func (h *ROANavHandler) HandleCmdRoutePrint(s *discordgo.Session, i *discordgo.I
 	// Validate.
 	if nav.Portals == nil || len(nav.Portals) == 0 {
 		lg.Error().Err(fmt.Errorf("no portals")).Msg("len(nav.Portals) == 0")
-		if mErr := respondEphemeralMessage(s, i, "エラー: 有効なルートが1個もないわん。 `/route-add` で追加してからまた試してほしいわん。"); mErr != nil {
+		if mErr := respondEphemeralMessage(s, i, "エラー: 有効なルートがないわん。 `/route-list` で確認したり `/route-add` で追加したりしてわん！"); mErr != nil {
 			lg.Error().Err(mErr).Msg("could not send InteractionResponse")
 		}
 		return
