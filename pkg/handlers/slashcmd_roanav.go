@@ -131,6 +131,7 @@ func (h *ROANavHandler) GetOrCreateNavigation(name string) *roanav.Navigation {
 		return v.(*roanav.Navigation)
 	}
 	nav := roanav.NewNavigation(name)
+	nav.Data[roanav.NavigationDataMarkedMaps] = "[]" // init
 	h.navigations.Store(name, nav)
 	return nav
 }
