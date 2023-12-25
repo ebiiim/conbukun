@@ -35,9 +35,10 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 > - `/help` このメッセージを表示します。
 > - `/mule` ラバに関するヒントをランダムに投稿します（30秒後に自動削除）。
 > - `/route-add` アバロンのルートを追加します。
-> - `/route-print` アバロンのルートを画像で投稿します。
-> - `/route-clear` アバロンのルートをリセットします。
 > - `/route-mark` マップの色を変えたりメモを載せたりします。
+> - `/route-list` いま持ってる情報を表示します（確認）。
+> - `/route-print` アバロンのルートを画像で投稿します（共有）。
+> - `/route-clear` アバロンのルートをリセットします。
 > ## リアクション
 > - `リアクション集計` 集計したいメッセージにリアクション（🤖）を行うとリマインダーを投稿します（2分後に自動削除）。
 > ## おまけ
@@ -48,6 +49,8 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 
 ## リリースノート
 
+- 202x-xx-xx v1.8.0
+  - 機能: `ルートナビ` 確認用コマンド `/route-list` を追加
 - 2023-12-24 v1.7.0
   - 改善: `ルートナビ` `/route-clear` 時にバックアップを取得＆マークは削除せずルートだけを削除するようにした
   - 機能: `ルートナビ` `/route-mark` にユーザ名を追加（情報提供目的）
@@ -115,6 +118,7 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
   - 機能: 会話AIほしくない？
   - 改善: 情報やエラーメッセージをembedでキレイに表示したい
   - 内部: マルチインスタンス対応（{リアクション|メンション}ハンドラのGuild ID対応）
+  - 機能: `/route-clear` にundoほしくない？（ほぼ使われていないので優先度低）
 
 ## ライセンス
 
