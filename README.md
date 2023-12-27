@@ -49,6 +49,8 @@ Albion Onlineのギルド [Dog The Boston](https://twitter.com/DogTheBoston) 用
 
 ## リリースノート
 
+- 2023-12-27 v1.8.1
+  - 修正: 応答がDiscordの文字数制限（2000字）を超えるときにエラーになる問題（省略するようにした）
 - 2023-12-26 v1.8.0
   - 機能: `ルートナビ` 確認用コマンド `/route-list` を追加
 - 2023-12-24 v1.7.0

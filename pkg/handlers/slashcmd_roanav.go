@@ -278,6 +278,7 @@ func (h *ROANavHandler) HandleCmdRouteList(s *discordgo.Session, i *discordgo.In
 	} else {
 		resp += smm
 	}
+	resp = truncateDiscordMessage(resp, "...長いので省略するわん！")
 
 	// Send response.
 	if mErr := respondEphemeralMessage(s, i, resp); mErr != nil {

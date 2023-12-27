@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog"
@@ -144,4 +145,14 @@ func pickOne(choices []choice) string {
 
 func Ptr[T any](v T) *T {
 	return &v
+}
+
+// truncateDiscordMessage truncates a string to <2000 characters.
+func truncateDiscordMessage(s string, msg string) string {
+	const maxLen = 1950 // 2000 - 50 (for safety)
+	if utf8.RuneCountInString(s) <= maxLen {
+		return s
+	} else {
+		return s[:maxLen-1-utf8.RuneCountInString(msg)] + "\n" + msg
+	}
 }

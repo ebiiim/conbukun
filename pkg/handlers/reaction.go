@@ -157,10 +157,12 @@ func HandleReactionAddReactionRequired(s *discordgo.Session, r *discordgo.Messag
 			sb.WriteString(fmt.Sprintf("`%s` ", name))
 		}
 	}
+	resp := strings.TrimRight(sb.String(), " ")
+	resp = truncateDiscordMessage(resp, "...（省略）")
 
 	// Send the response.
 	msg, err := sendSilentMessage(s, r.ChannelID, &discordgo.MessageSend{
-		Content:   strings.TrimRight(sb.String(), " "),
+		Content:   resp,
 		Reference: parentMsg.Reference(),
 	})
 	if err != nil {
