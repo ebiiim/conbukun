@@ -149,10 +149,15 @@ func Ptr[T any](v T) *T {
 
 // truncateDiscordMessage truncates a string to <2000 characters.
 func truncateDiscordMessage(s string, msg string) string {
-	const maxLen = 1950 // 2000 - 50 (for safety)
+	const maxLen = 1980 // 2000 - 20 (for safety)
 	if utf8.RuneCountInString(s) <= maxLen {
 		return s
 	} else {
-		return s[:maxLen-1-utf8.RuneCountInString(msg)] + "\n" + msg
+		// cut chars
+		for utf8.RuneCountInString(s) > maxLen-1-utf8.RuneCountInString(msg) {
+			_, size := utf8.DecodeLastRuneInString(s)
+			s = s[:len(s)-size]
+		}
+		return s + "\n" + msg
 	}
 }
