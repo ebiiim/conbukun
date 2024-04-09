@@ -7,12 +7,16 @@ import (
 )
 
 func main() {
+	c := 0
 	for k, v := range data.Maps {
-		fmt.Printf("%+v\n", k)
+		fmt.Printf("%04d | %+v\n", c, k)
 		fmt.Printf("\t%+v\n", v)
+		c++
 	}
 
-	fmt.Print("\n\n\n")
+	fmt.Print("\n\n")
+	fmt.Printf("loaded %d maps\n", c)
+	fmt.Print("\n\n")
 
 	m, _ := data.GetMapDataFromName("Qiitun-Vietis")
 	fmt.Printf("%+v\n", m)
